@@ -1,0 +1,10 @@
+[package]
+name = "deno-webview"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tao = "0.28.0"
+wry = "0.39.5"
+typical = "0.12.1"
