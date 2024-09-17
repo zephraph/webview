@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClientEvent",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "eval"
+          ]
+        },
+        "data": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}
