@@ -2,6 +2,6 @@
   "name": "@justbe/webview",
   "tasks": {
     "dev": "deno run --watch main.ts",
-    "gen:protocol": "typical generate src/protocol.t --rust src/protocol.rs --typescript src/protocol.ts"
+    "gen": "cargo test && deno run -A scripts/generate-zod.ts"
   }
 }
