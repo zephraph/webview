@@ -13,10 +13,19 @@ export const ClientEvent = z.discriminatedUnion("$type", [
 
 export type ClientEvent = z.infer<typeof ClientEvent>;
 
-export const WebViewOptions = z.object({
-  title: z.string(),
-  url: z.string(),
-});
+export const WebViewOptions = z.intersection(
+  z.object({
+    title: z.string(),
+  }),
+  z.union([
+    z.object({
+      url: z.string(),
+    }),
+    z.object({
+      html: z.string(),
+    }),
+  ]),
+);
 
 export type WebViewOptions = z.infer<typeof WebViewOptions>;
 

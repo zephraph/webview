@@ -1,10 +1,18 @@
 import { walk } from "https://deno.land/std@0.190.0/fs/walk.ts";
 import { basename } from "https://deno.land/std@0.190.0/path/mod.ts";
 import { match, P } from "npm:ts-pattern";
-import type { JSONSchema7 as JSONSchema } from "npm:@types/json-schema";
+import {
+  type JSONSchema7 as JSONSchema,
+  JSONSchema7Definition,
+} from "npm:@types/json-schema";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
 const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
+
+const isDescriminatedUnion = (def: JSONSchema7Definition[] | undefined) => {
+  return def && typeof def[0] === "object" &&
+    def[0]?.required?.includes("$type");
+};
 
 function generateZodSchema(schema: JSONSchema) {
   let zodSchema = "";
@@ -29,11 +37,14 @@ function generateZodSchema(schema: JSONSchema) {
           });
       }
     })
-    .with({ title: P.string, oneOf: P.array() }, (schema) => {
+    .with({
+      title: P.string,
+      oneOf: P.when(isDescriminatedUnion),
+    }, (schema) => {
       // @ts-expect-error This is fine, this code path should never be a boolean
       const descrim = schema.oneOf[0]?.required[0];
       wn(`z.discriminatedUnion("${descrim}", [`);
-      for (const s of schema.oneOf) {
+      for (const s of schema.oneOf ?? []) {
         if (typeof s === "boolean") {
           w(`z.boolean(),`);
           continue;
@@ -56,8 +67,37 @@ function generateZodSchema(schema: JSONSchema) {
       }
       wn("])");
     })
-    .with({ title: P.string }, (schema) => {
-      wn(`z.object({`);
+    .with({ title: P.string, oneOf: P.array() }, (schema) => {
+      if (schema.properties) {
+        wn("z.intersection(");
+        wn("z.object({");
+        for (const [key, value] of Object.entries(schema.properties!)) {
+          const required = schema.required?.includes(key) ?? false;
+          w(
+            `${key}:`,
+            typeof value === "boolean"
+              ? value.toString()
+              : generateZodSchema(value) + (required ? "" : ".optional()"),
+            ",",
+          );
+        }
+        wn("}),");
+      }
+      wn("z.union([");
+      for (const s of schema.oneOf ?? []) {
+        if (typeof s === "boolean") {
+          w("z.boolean(),");
+          continue;
+        }
+        w(generateZodSchema(s), ",");
+      }
+      wn("])");
+      if (schema.properties) {
+        wn(")");
+      }
+    })
+    .with({ type: "object" }, (schema) => {
+      wn("z.object({");
       for (const [key, value] of Object.entries(schema.properties!)) {
         const required = schema.required?.includes(key) ?? false;
         w(
