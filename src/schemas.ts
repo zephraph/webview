@@ -4,8 +4,11 @@ import { z } from "npm:zod";
 export const ClientEvent = z.discriminatedUnion("$type", [
   z.object({ $type: z.literal("eval"), data: z.string() }),
   z.object({ $type: z.literal("setTitle"), data: z.string() }),
-  z.object({ $type: z.literal("getTitle") }),
-  z.object({ $type: z.literal("openDevTools") }),
+  z.object({ $type: z.literal("getTitle"), data: z.undefined().optional() }),
+  z.object({
+    $type: z.literal("openDevTools"),
+    data: z.undefined().optional(),
+  }),
 ]);
 
 export type ClientEvent = z.infer<typeof ClientEvent>;
@@ -19,10 +22,13 @@ export type WebViewOptions = z.infer<typeof WebViewOptions>;
 
 export const WebViewEvent = z.discriminatedUnion("$type", [
   z.object({ $type: z.literal("unknown"), data: z.string() }),
-  z.object({ $type: z.literal("started") }),
-  z.object({ $type: z.literal("closed") }),
+  z.object({ $type: z.literal("started"), data: z.undefined().optional() }),
+  z.object({ $type: z.literal("closed"), data: z.undefined().optional() }),
   z.object({ $type: z.literal("getTitle"), data: z.string() }),
-  z.object({ $type: z.literal("setTitleDone") }),
+  z.object({
+    $type: z.literal("setTitleDone"),
+    data: z.undefined().optional(),
+  }),
 ]);
 
 export type WebViewEvent = z.infer<typeof WebViewEvent>;

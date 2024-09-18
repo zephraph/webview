@@ -37,6 +37,10 @@ function generateZodSchema(schema: JSONSchema) {
             ",",
           );
         }
+        // Ensure `data` is always defined in descriminated unions
+        if (!("data" in s.properties!)) {
+          w("data: z.undefined().optional(),");
+        }
         w(`}),`);
       }
       wn("])");
