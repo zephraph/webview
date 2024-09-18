@@ -5,6 +5,24 @@
     {
       "type": "object",
       "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "unknown"
+          ]
+        },
+        "data": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
         "$type"
       ],
       "properties": {
@@ -26,6 +44,73 @@
           "type": "string",
           "enum": [
             "closed"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "getTitle"
+          ]
+        },
+        "data": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "setTitleDone"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "openDevToolsDone"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "evalDone"
+          ]
+        },
+        "data": {
+          "type": [
+            "string",
+            "null"
           ]
         }
       }

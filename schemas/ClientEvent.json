@@ -19,6 +19,52 @@
           "type": "string"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "setTitle"
+          ]
+        },
+        "data": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "getTitle"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "openDevTools"
+          ]
+        }
+      }
     }
   ]
 }

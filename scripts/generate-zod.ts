@@ -1,21 +1,77 @@
-import { jsonSchemaToZod as compile } from "npm:json-schema-to-zod";
 import { walk } from "https://deno.land/std@0.190.0/fs/walk.ts";
 import { basename } from "https://deno.land/std@0.190.0/path/mod.ts";
+import { match, P } from "npm:ts-pattern";
+import type { JSONSchema7 as JSONSchema } from "npm:@types/json-schema";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
 const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
 
-async function generateZodSchema(filePath: string): Promise<string> {
-  const jsonSchema = JSON.parse(await Deno.readTextFile(filePath));
-  const schemaName = basename(filePath, ".json");
-  const zodSchema = compile(jsonSchema, {
-    name: schemaName,
-    module: "esm",
-    type: true,
-    noImport: true,
-  });
+function generateZodSchema(schema: JSONSchema) {
+  let zodSchema = "";
+  const w = (...t: string[]) => {
+    zodSchema += t.join(" ");
+  };
+  const wn = (...t: string[]) => w(...t, "\n");
 
-  return `// ${schemaName}\n${zodSchema}\n\n`;
+  match(schema)
+    .with({ type: "string", enum: P.array() }, (schema) => {
+      w(`z.literal("${schema.enum[0]}")`);
+    })
+    .with({ type: "string" }, () => w("z.string()"))
+    .with({ type: P.array(P.string) }, (schema) => {
+      w("z");
+      for (const type of schema.type) {
+        match(type)
+          .with("string", () => w(".string()"))
+          .with("null", () => w(".nullable()"))
+          .otherwise(() => {
+            throw new Error(`Unsupported type: ${type}`);
+          });
+      }
+    })
+    .with({ title: P.string, oneOf: P.array() }, (schema) => {
+      // @ts-expect-error This is fine, this code path should never be a boolean
+      const descrim = schema.oneOf[0]?.required[0];
+      wn(`z.discriminatedUnion("${descrim}", [`);
+      for (const s of schema.oneOf) {
+        if (typeof s === "boolean") {
+          w(`z.boolean(),`);
+          continue;
+        }
+        w(`z.object({`);
+        for (const [key, value] of Object.entries(s.properties!)) {
+          w(
+            `${key}:`,
+            typeof value === "boolean"
+              ? value.toString()
+              : generateZodSchema(value),
+            ",",
+          );
+        }
+        // Ensure `data` is always defined in descriminated unions
+        if (!("data" in s.properties!)) {
+          w("data: z.undefined().optional(),");
+        }
+        w(`}),`);
+      }
+      wn("])");
+    })
+    .with({ title: P.string }, (schema) => {
+      wn(`z.object({`);
+      for (const [key, value] of Object.entries(schema.properties!)) {
+        const required = schema.required?.includes(key) ?? false;
+        w(
+          `${key}:`,
+          typeof value === "boolean"
+            ? value.toString()
+            : generateZodSchema(value) + (required ? "" : ".optional()"),
+          ",",
+        );
+      }
+      wn("})");
+    });
+
+  return zodSchema;
 }
 
 async function main() {
@@ -25,8 +81,15 @@ async function main() {
 
   for await (const entry of walk(schemasDir, { exts: [".json"] })) {
     if (entry.isFile) {
-      const schema = await generateZodSchema(entry.path);
-      output += schema;
+      const jsonSchema: JSONSchema = JSON.parse(
+        await Deno.readTextFile(entry.path),
+      );
+      const schemaName = basename(entry.path, ".json");
+      const schema = await generateZodSchema(jsonSchema);
+      output += `
+        export const ${schemaName} = ${schema}
+        export type ${schemaName} = z.infer<typeof ${schemaName}>;
+      `;
     }
   }
 
