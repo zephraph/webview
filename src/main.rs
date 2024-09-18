@@ -9,7 +9,15 @@ use serde_json;
 #[derive(JsonSchema, Deserialize, Debug)]
 struct WebViewOptions {
     title: String,
-    url: String,
+    #[serde(flatten)]
+    target: WebViewTarget,
+}
+
+#[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+enum WebViewTarget {
+    Url(String),
+    Html(String),
 }
 
 #[derive(JsonSchema, Serialize, Debug)]
@@ -53,9 +61,12 @@ fn main() -> wry::Result<()> {
         .with_title(webview_options.title)
         .build(&event_loop)
         .unwrap();
-    let webview = WebViewBuilder::new(&window)
-        .with_url(webview_options.url)
-        .build()?;
+
+    let webview = match webview_options.target {
+        WebViewTarget::Url(url) => WebViewBuilder::new(&window).with_url(url),
+        WebViewTarget::Html(html) => WebViewBuilder::new(&window).with_html(html),
+    }
+    .build()?;
 
     let (tx, to_deno) = mpsc::channel::<WebViewEvent>();
     let (from_deno, rx) = mpsc::channel::<ClientEvent>();

@@ -2,15 +2,37 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "WebViewOptions",
   "type": "object",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "html"
+      ],
+      "properties": {
+        "html": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
   "required": [
-    "title",
-    "url"
+    "title"
   ],
   "properties": {
     "title": {
-      "type": "string"
-    },
-    "url": {
       "type": "string"
     }
   }
