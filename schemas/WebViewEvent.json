@@ -5,7 +5,8 @@
     {
       "type": "object",
       "required": [
-        "$type"
+        "$type",
+        "data"
       ],
       "properties": {
         "$type": {
@@ -13,6 +14,9 @@
           "enum": [
             "unknown"
           ]
+        },
+        "data": {
+          "type": "string"
         }
       }
     },
@@ -54,11 +58,25 @@
         "$type": {
           "type": "string",
           "enum": [
-            "devToolsOpen"
+            "getTitle"
           ]
         },
         "data": {
-          "type": "boolean"
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "setTitleDone"
+          ]
         }
       }
     }

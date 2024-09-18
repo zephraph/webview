@@ -1,5 +1,9 @@
 import { EventEmitter } from "node:events";
-import { ClientEvent, WebViewEvent, WebViewOptions } from "./schemas.ts";
+import {
+  type ClientEvent,
+  WebViewEvent,
+  type WebViewOptions,
+} from "./schemas.ts";
 
 export class WebView implements Disposable {
   #process: Deno.ChildProcess;
