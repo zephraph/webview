@@ -52,7 +52,6 @@ export class WebView implements Disposable {
     while (true) {
       const result = await this.#recv();
       if (result?.success) {
-        console.log("emit", result.data.$type, result.data.data);
         this.#event.emit(result.data.$type, result.data.data);
         switch (result.data.$type) {
           case "closed":
@@ -69,15 +68,29 @@ export class WebView implements Disposable {
   }
 
   setTitle(title: string) {
-    this.#stdin.write(title);
+    this.#send({ $type: "setTitle", data: title });
+    return new Promise<void>((resolve) => {
+      this.once("setTitleDone", () => {
+        resolve();
+      });
+    });
   }
 
   on(event: WebViewEvent["$type"], callback: (event: WebViewEvent) => void) {
     this.#event.on(event, callback);
   }
 
+  once(event: WebViewEvent["$type"], callback: (event: WebViewEvent) => void) {
+    this.#event.once(event, callback);
+  }
+
   getTitle() {
-    return this.#stdout.read();
+    this.#send({ $type: "getTitle" });
+    return new Promise((resolve) => {
+      this.once("getTitle", (event) => {
+        resolve(event.data);
+      });
+    });
   }
 
   bind(name: string, callback: (...args: any[]) => any) {}

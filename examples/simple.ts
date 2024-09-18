@@ -2,16 +2,12 @@ import { WebView } from "../src/lib.ts";
 
 const webview = new WebView({
   title: "Simple",
-  url: "https://example.com",
+  url: "data:text/html,%3Ch1%3EHello%2C%20World%21%3C%2Fh1%3E",
 });
 
 webview.on("started", async () => {
-  webview.eval("window.location.href = 'https://google.com'");
-  console.log("devtools open 1?", await webview.isDevToolsOpen());
-  webview.openDevTools();
-  console.log("devtools open 2?", await webview.isDevToolsOpen());
-  webview.closeDevTools();
-  console.log("devtools open 3?", await webview.isDevToolsOpen());
+  await webview.setTitle("Hello World");
+  await webview.getTitle();
 });
 
 await webview.waitUntilClosed();

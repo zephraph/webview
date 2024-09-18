@@ -16,10 +16,12 @@ struct WebViewOptions {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type", content = "data")]
 enum WebViewEvent {
-    Unknown,
+    Unknown(String),
     Started,
     Closed,
-    DevToolsOpen(bool),
+    GetTitle(String),
+
+    SetTitleDone,
 }
 
 #[derive(JsonSchema, Deserialize, Debug)]
@@ -27,9 +29,9 @@ enum WebViewEvent {
 #[serde(tag = "$type", content = "data")]
 enum ClientEvent {
     Eval(String),
+    SetTitle(String),
+    GetTitle,
     OpenDevTools,
-    CloseDevTools,
-    IsDevToolsOpen,
 }
 
 fn main() -> wry::Result<()> {
@@ -120,14 +122,16 @@ fn main() -> wry::Result<()> {
                         ClientEvent::OpenDevTools => {
                             webview.open_devtools();
                         }
-                        ClientEvent::CloseDevTools => {
-                            webview.close_devtools();
+                        ClientEvent::SetTitle(title) => {
+                            window.set_title(title.as_str());
+                            tx.send(WebViewEvent::SetTitleDone).unwrap();
                         }
-                        ClientEvent::IsDevToolsOpen => {
-                            tx.send(WebViewEvent::DevToolsOpen(webview.is_devtools_open()))
-                                .unwrap();
+                        ClientEvent::GetTitle => {
+                            tx.send(WebViewEvent::GetTitle(window.title())).unwrap();
                         }
-                        _ => tx.send(WebViewEvent::Unknown).unwrap(),
+                        _ => tx
+                            .send(WebViewEvent::Unknown(format!("{:?}", event)))
+                            .unwrap(),
                     }
                 }
             }
