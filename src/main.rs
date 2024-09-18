@@ -14,10 +14,12 @@ struct WebViewOptions {
 
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "$type")]
+#[serde(tag = "$type", content = "data")]
 enum WebViewEvent {
+    Unknown,
     Started,
     Closed,
+    DevToolsOpen(bool),
 }
 
 #[derive(JsonSchema, Deserialize, Debug)]
@@ -25,6 +27,9 @@ enum WebViewEvent {
 #[serde(tag = "$type", content = "data")]
 enum ClientEvent {
     Eval(String),
+    OpenDevTools,
+    CloseDevTools,
+    IsDevToolsOpen,
 }
 
 fn main() -> wry::Result<()> {
@@ -55,13 +60,17 @@ fn main() -> wry::Result<()> {
         let mut stdout_lock = stdout.lock();
 
         while let Ok(event) = to_deno.recv() {
-            if let Ok(json) = serde_json::to_string(&event) {
-                let mut buffer = json.replace("\0", "").into_bytes();
-                buffer.push(0); // Add null byte
-                stdout_lock.write_all(&buffer).unwrap();
-                stdout_lock.flush().unwrap();
-            } else {
-                eprintln!("Failed to serialize event: {:?}", event);
+            eprintln!("Sending event: {:?}", event);
+            match serde_json::to_string(&event) {
+                Ok(json) => {
+                    let mut buffer = json.replace("\0", "").into_bytes();
+                    buffer.push(0); // Add null byte
+                    stdout_lock.write_all(&buffer).unwrap();
+                    stdout_lock.flush().unwrap();
+                }
+                Err(err) => {
+                    eprintln!("Failed to serialize event: {:?} {:?}", event, err);
+                }
             }
         }
     });
@@ -108,6 +117,17 @@ fn main() -> wry::Result<()> {
                         ClientEvent::Eval(js) => {
                             webview.evaluate_script(&js).unwrap();
                         }
+                        ClientEvent::OpenDevTools => {
+                            webview.open_devtools();
+                        }
+                        ClientEvent::CloseDevTools => {
+                            webview.close_devtools();
+                        }
+                        ClientEvent::IsDevToolsOpen => {
+                            tx.send(WebViewEvent::DevToolsOpen(webview.is_devtools_open()))
+                                .unwrap();
+                        }
+                        _ => tx.send(WebViewEvent::Unknown).unwrap(),
                     }
                 }
             }

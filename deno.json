@@ -1,7 +1,12 @@
 {
   "name": "@justbe/webview",
+  "exports": {
+    ".": "./src/lib.ts"
+  },
   "tasks": {
     "dev": "deno run --watch main.ts",
-    "gen": "cargo test && deno run -A scripts/generate-zod.ts"
+    "gen": "cargo test && deno run -A scripts/generate-zod.ts",
+    "build": "deno task gen && cargo build",
+    "example:simple": "deno run -A examples/simple.ts"
   }
 }

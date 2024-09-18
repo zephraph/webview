@@ -19,6 +19,48 @@
           "type": "string"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "openDevTools"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "closeDevTools"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "isDevToolsOpen"
+          ]
+        }
+      }
     }
   ]
 }

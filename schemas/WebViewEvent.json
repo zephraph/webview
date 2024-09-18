@@ -11,6 +11,20 @@
         "$type": {
           "type": "string",
           "enum": [
+            "unknown"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
             "started"
           ]
         }
@@ -27,6 +41,24 @@
           "enum": [
             "closed"
           ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "devToolsOpen"
+          ]
+        },
+        "data": {
+          "type": "boolean"
         }
       }
     }

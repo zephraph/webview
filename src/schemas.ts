@@ -2,9 +2,28 @@
 import { z } from "npm:zod";
 
 // ClientEvent
-export const ClientEvent = z.object({
-  "$type": z.literal("eval"),
-  "data": z.string(),
+export const ClientEvent = z.any().superRefine((x, ctx) => {
+  const schemas = [
+    z.object({ "$type": z.literal("eval"), "data": z.string() }),
+    z.object({ "$type": z.literal("openDevTools") }),
+    z.object({ "$type": z.literal("closeDevTools") }),
+    z.object({ "$type": z.literal("isDevToolsOpen") }),
+  ];
+  const errors = schemas.reduce<z.ZodError[]>(
+    (errors, schema) =>
+      ((result) => result.error ? [...errors, result.error] : errors)(
+        schema.safeParse(x),
+      ),
+    [],
+  );
+  if (schemas.length - errors.length !== 1) {
+    ctx.addIssue({
+      path: ctx.path,
+      code: "invalid_union",
+      unionErrors: errors,
+      message: "Invalid input: Should pass single schema",
+    });
+  }
 });
 export type ClientEvent = z.infer<typeof ClientEvent>;
 
@@ -18,8 +37,10 @@ export type WebViewOptions = z.infer<typeof WebViewOptions>;
 // WebViewEvent
 export const WebViewEvent = z.any().superRefine((x, ctx) => {
   const schemas = [
+    z.object({ "$type": z.literal("unknown") }),
     z.object({ "$type": z.literal("started") }),
     z.object({ "$type": z.literal("closed") }),
+    z.object({ "$type": z.literal("devToolsOpen"), "data": z.boolean() }),
   ];
   const errors = schemas.reduce<z.ZodError[]>(
     (errors, schema) =>

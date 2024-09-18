@@ -43,6 +43,7 @@ export class WebView implements Disposable {
         JSON.parse(this.#buffer.slice(0, newLineIndex)),
       );
       this.#buffer = this.#buffer.slice(newLineIndex + 1);
+      console.log("recv result", result);
       return result;
     }
   }
@@ -51,7 +52,8 @@ export class WebView implements Disposable {
     while (true) {
       const result = await this.#recv();
       if (result?.success) {
-        this.#event.emit(result.data.$type, result.data);
+        console.log("emit", result.data.$type, result.data.data);
+        this.#event.emit(result.data.$type, result.data.data);
         switch (result.data.$type) {
           case "closed":
             return;
@@ -84,6 +86,10 @@ export class WebView implements Disposable {
 
   eval(code: string, callback?: (result: any) => void) {
     this.#send({ $type: "eval", data: code });
+  }
+
+  openDevTools() {
+    this.#send({ $type: "openDevTools" });
   }
 
   destroy() {
