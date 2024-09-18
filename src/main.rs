@@ -21,7 +21,10 @@ enum WebViewEvent {
     Closed,
     GetTitle(String),
 
+    // Responses
     SetTitleDone,
+    OpenDevToolsDone,
+    EvalDone(Option<String>),
 }
 
 #[derive(JsonSchema, Deserialize, Debug)]
@@ -117,10 +120,16 @@ fn main() -> wry::Result<()> {
                     eprintln!("Received event: {:?}", event);
                     match event {
                         ClientEvent::Eval(js) => {
-                            webview.evaluate_script(&js).unwrap();
+                            let result = webview.evaluate_script(&js);
+                            tx.send(WebViewEvent::EvalDone(match result {
+                                Ok(_) => None,
+                                Err(err) => Some(err.to_string()),
+                            }))
+                            .unwrap();
                         }
                         ClientEvent::OpenDevTools => {
                             webview.open_devtools();
+                            tx.send(WebViewEvent::OpenDevToolsDone).unwrap();
                         }
                         ClientEvent::SetTitle(title) => {
                             window.set_title(title.as_str());

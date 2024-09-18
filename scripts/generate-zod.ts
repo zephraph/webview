@@ -18,6 +18,17 @@ function generateZodSchema(schema: JSONSchema) {
       w(`z.literal("${schema.enum[0]}")`);
     })
     .with({ type: "string" }, () => w("z.string()"))
+    .with({ type: P.array(P.string) }, (schema) => {
+      w("z");
+      for (const type of schema.type) {
+        match(type)
+          .with("string", () => w(".string()"))
+          .with("null", () => w(".nullable()"))
+          .otherwise(() => {
+            throw new Error(`Unsupported type: ${type}`);
+          });
+      }
+    })
     .with({ title: P.string, oneOf: P.array() }, (schema) => {
       // @ts-expect-error This is fine, this code path should never be a boolean
       const descrim = schema.oneOf[0]?.required[0];

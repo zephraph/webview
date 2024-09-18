@@ -29,6 +29,11 @@ export const WebViewEvent = z.discriminatedUnion("$type", [
     $type: z.literal("setTitleDone"),
     data: z.undefined().optional(),
   }),
+  z.object({
+    $type: z.literal("openDevToolsDone"),
+    data: z.undefined().optional(),
+  }),
+  z.object({ $type: z.literal("evalDone"), data: z.string().nullable() }),
 ]);
 
 export type WebViewEvent = z.infer<typeof WebViewEvent>;

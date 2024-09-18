@@ -67,8 +67,19 @@ export class WebView implements Disposable {
     }
   }
 
+  /**
+   * Returns a promise that resolves when the webview window is closed.
+   */
   async waitUntilClosed() {
     await this.#messageLoop;
+  }
+
+  on(event: WebViewEvent["$type"], callback: (event: WebViewEvent) => void) {
+    this.#event.on(event, callback);
+  }
+
+  once(event: WebViewEvent["$type"], callback: (event: WebViewEvent) => void) {
+    this.#event.once(event, callback);
   }
 
   setTitle(title: string) {
@@ -80,14 +91,9 @@ export class WebView implements Disposable {
     });
   }
 
-  on(event: WebViewEvent["$type"], callback: (event: WebViewEvent) => void) {
-    this.#event.on(event, callback);
-  }
-
-  once(event: WebViewEvent["$type"], callback: (event: WebViewEvent) => void) {
-    this.#event.once(event, callback);
-  }
-
+  /**
+   * Gets the title of the webview.
+   */
   getTitle() {
     this.#send({ $type: "getTitle" });
     return new Promise((resolve) => {
@@ -101,12 +107,29 @@ export class WebView implements Disposable {
 
   unbind(name: string) {}
 
-  eval(code: string, callback?: (result: any) => void) {
+  /**
+   * Evaluates JavaScript code in the webview.
+   * If the code fails to execute, the returned promise will be rejected.
+   */
+  eval(code: string) {
     this.#send({ $type: "eval", data: code });
+    return new Promise<void>((resolve, reject) => {
+      this.once("evalDone", (errorMessage) => {
+        if (errorMessage) {
+          reject(errorMessage);
+        }
+        resolve();
+      });
+    });
   }
 
   openDevTools() {
     this.#send({ $type: "openDevTools" });
+    return new Promise<void>((resolve) => {
+      this.once("openDevToolsDone", () => {
+        resolve();
+      });
+    });
   }
 
   destroy() {
@@ -114,6 +137,7 @@ export class WebView implements Disposable {
   }
 
   [Symbol.dispose](): void {
+    this.#event.removeAllListeners();
     this.#stdin.releaseLock();
     try {
       this.#process.kill();
