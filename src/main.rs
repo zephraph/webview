@@ -56,7 +56,9 @@ fn main() -> wry::Result<()> {
 
         while let Ok(event) = to_deno.recv() {
             if let Ok(json) = serde_json::to_string(&event) {
-                stdout_lock.write((json + "\n").as_bytes()).unwrap();
+                let mut buffer = json.replace("\0", "").into_bytes();
+                buffer.push(0); // Add null byte
+                stdout_lock.write_all(&buffer).unwrap();
                 stdout_lock.flush().unwrap();
             } else {
                 eprintln!("Failed to serialize event: {:?}", event);
@@ -67,18 +69,20 @@ fn main() -> wry::Result<()> {
     std::thread::spawn(move || {
         let stdin = io::stdin();
         let mut stdin = stdin.lock();
-        let mut line = String::new();
+        let mut buf = Vec::<u8>::new();
 
-        while stdin.read_line(&mut line).is_ok() {
-            if line.is_empty() {
+        while stdin.read_until(b'\0', &mut buf).is_ok() {
+            if buf.is_empty() {
                 break; // EOF reached
             }
+            // Remove null byte
+            buf.pop();
 
-            match serde_json::from_str::<ClientEvent>(&line) {
+            match serde_json::from_slice::<ClientEvent>(&buf) {
                 Ok(event) => from_deno.send(event).unwrap(),
                 Err(e) => eprintln!("Failed to deserialize: {:?}", e),
             }
-            line.clear();
+            buf.clear()
         }
     });
 

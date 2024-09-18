@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { WebViewEvent } from "./schemas.ts";
+import { ClientEvent, WebViewEvent, WebViewOptions } from "./schemas.ts";
 
 export class WebView implements Disposable {
   #process: Deno.ChildProcess;
@@ -22,7 +22,9 @@ export class WebView implements Disposable {
   }
 
   #send(event: ClientEvent) {
-    this.#stdin.write(new TextEncoder().encode(JSON.stringify(event) + "\n"));
+    this.#stdin.write(
+      new TextEncoder().encode(JSON.stringify(event).replace("\0", "") + "\0"),
+    );
   }
 
   async #recv() {
@@ -33,7 +35,7 @@ export class WebView implements Disposable {
       }
       this.#buffer += new TextDecoder().decode(value);
 
-      const newLineIndex = this.#buffer.indexOf("\n");
+      const newLineIndex = this.#buffer.indexOf("\0");
       if (newLineIndex === -1) {
         continue;
       }
