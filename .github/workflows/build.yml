@@ -8,6 +8,7 @@ jobs:
     name: Build on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: ${{ github.ref == 'refs/heads/main' }}
       matrix:
         include:
           - os: ubuntu-latest
