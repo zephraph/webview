@@ -13,12 +13,3 @@ schemars = "0.8.21"
 [features]
 transparent = ["wry/transparent"]
 devtools = ["wry/devtools"]
-
-[target.'cfg(any(feature = "transparent", feature = "devtools"))'.dependencies]
-wry = { version = "0.39.5", features = [] }
-
-[target.'cfg(feature = "transparent")'.dependencies.wry]
-features = ["transparent"]
-
-[target.'cfg(feature = "devtools")'.dependencies.wry]
-features = ["devtools"]
