@@ -15,7 +15,16 @@ export type ClientEvent = z.infer<typeof ClientEvent>;
 
 export const WebViewOptions = z.intersection(
   z.object({
+    accept_first_mouse: z.boolean().optional(),
+    autoplay: z.boolean().optional(),
+    clipboard: z.boolean().optional(),
+    decorations: z.boolean().optional().optional(),
+    devtools: z.boolean().optional(),
+    focused: z.boolean().optional(),
+    fullscreen: z.boolean().optional(),
+    incognito: z.boolean().optional(),
     title: z.string(),
+    transparent: z.boolean().optional(),
   }),
   z.union([
     z.object({
