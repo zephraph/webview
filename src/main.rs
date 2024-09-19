@@ -1,4 +1,3 @@
-use std::borrow::{Borrow, BorrowMut};
 use std::env;
 use std::io::{self, BufRead, Write};
 use std::sync::mpsc;
@@ -63,7 +62,6 @@ enum WebViewTarget {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type", content = "data")]
 enum WebViewEvent {
-    Unknown(String),
     Started,
     Closed,
     GetTitle(String),
@@ -201,9 +199,6 @@ fn main() -> wry::Result<()> {
                         ClientEvent::GetTitle => {
                             tx.send(WebViewEvent::GetTitle(window.title())).unwrap();
                         }
-                        _ => tx
-                            .send(WebViewEvent::Unknown(format!("{:?}", event)))
-                            .unwrap(),
                     }
                 }
             }
