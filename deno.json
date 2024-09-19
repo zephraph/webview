@@ -6,7 +6,7 @@
   "tasks": {
     "dev": "deno run --watch main.ts",
     "gen": "cargo test && deno run -A scripts/generate-zod.ts",
-    "build": "deno task gen && cargo build",
+    "build": "deno task gen && cargo build -F transparent",
     "example:simple": "deno run -A examples/simple.ts"
   }
 }
