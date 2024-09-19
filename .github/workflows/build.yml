@@ -1,0 +1,71 @@
+name: Build Rust Binary
+
+on:
+  push:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cross (for Windows build)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: cargo install cross
+
+      - name: Set build flags
+        id: build_flags
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "flags=--release" >> $GITHUB_OUTPUT
+            echo "build_type=release" >> $GITHUB_OUTPUT
+          else
+            echo "flags=" >> $GITHUB_OUTPUT
+            echo "build_type=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build (non-Windows, non-aarch64-apple)
+        if: matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
+        run: cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+
+      - name: Build (aarch64-apple-darwin)
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+
+      - name: Build (Windows)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: cross build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview_deno_rust*
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deps
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/build
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/.fingerprint
+          retention-days: 7

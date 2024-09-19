@@ -1,0 +1,43 @@
+name: Release Rust Binary
+
+on:
+  workflow_run:
+    workflows: ["Build Rust Binary"]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          run-id: ${{github.event.workflow_run.id}}
+
+      - name: Get version from Cargo.toml
+        id: get_version
+        run: |
+          VERSION=$(grep '^version =' Cargo.toml | sed 's/.*= *"//' | sed 's/".*//')
+          echo "::set-output name=version::$VERSION"
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "binary-*/webview_deno_rust*"
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+
+      - name: Release Status
+        run: echo "Release v${{ steps.get_version.outputs.version }} created or updated."
