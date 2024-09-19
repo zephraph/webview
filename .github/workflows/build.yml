@@ -8,10 +8,10 @@ jobs:
     name: Check
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Rust
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache-rust
         with:
           path: |
@@ -51,10 +51,10 @@ jobs:
             target: aarch64-apple-darwin
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Rust
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache-rust
         with:
           path: |
