@@ -10,14 +10,25 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Cache Rust
+        uses: actions/cache@v2
+        id: cache-rust
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-rust-check-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml', '**/*.rs') }}
+
+      - name: Exit early on cache hit
+        if: steps.cache-rust.outputs.cache-hit == 'true'
+        run: exit 0
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
 
       - name: Run cargo check
         run: cargo check
@@ -42,6 +53,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Cache Rust
+        uses: actions/cache@v2
+        id: cache-rust
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-rust-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml', '**/*.rs') }}
+
+      - name: Exit early on cache hit
+        if: steps.cache-rust.outputs.cache-hit == 'true'
+        run: exit 0
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -54,9 +79,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-xwin (for Windows build)
         if: matrix.target == 'x86_64-pc-windows-msvc'
@@ -94,4 +116,3 @@ jobs:
             !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deps
             !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/build
             !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/.fingerprint
-          retention-days: 7
