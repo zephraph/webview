@@ -20,17 +20,15 @@ jobs:
             target
           key: ${{ runner.os }}-rust-check-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
-      - name: Exit early on cache hit
-        if: steps.cache-rust.outputs.cache-hit == 'true'
-        run: exit 0
-
       - name: Install Rust
+        if: steps.cache-rust.outputs.cache-hit != 'true'
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
       - name: Run cargo check
+        if: steps.cache-rust.outputs.cache-hit != 'true'
         run: cargo check
 
   build:
@@ -63,12 +61,9 @@ jobs:
             target
           key: ${{ runner.os }}-rust-${{ matrix.target }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
-      - name: Exit early on cache hit
-        if: steps.cache-rust.outputs.cache-hit == 'true'
-        run: exit 0
-
       - name: Install Rust
         uses: actions-rs/toolchain@v1
+        if: steps.cache-rust.outputs.cache-hit != 'true'
         with:
           toolchain: stable
           target: ${{ matrix.target }}
@@ -111,18 +106,19 @@ jobs:
           fi
 
       - name: Build (non-Windows, non-aarch64-apple)
-        if: matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
+        if: steps.cache-rust.outputs.cache-hit != 'true' && matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
         run: cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Build (aarch64-apple-darwin)
-        if: matrix.target == 'aarch64-apple-darwin'
+        if: steps.cache-rust.outputs.cache-hit != 'true' && matrix.target == 'aarch64-apple-darwin'
         run: SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Build (Windows)
-        if: matrix.target == 'x86_64-pc-windows-msvc'
+        if: steps.cache-rust.outputs.cache-hit != 'true' && matrix.target == 'x86_64-pc-windows-msvc'
         run: cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Upload artifact
+        if: steps.cache-rust.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
