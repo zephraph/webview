@@ -1,15 +1,15 @@
 import { walk } from "https://deno.land/std@0.190.0/fs/walk.ts";
 import { basename } from "https://deno.land/std@0.190.0/path/mod.ts";
 import { match, P } from "npm:ts-pattern";
-import {
-  type JSONSchema7 as JSONSchema,
-  JSONSchema7Definition,
+import type {
+  JSONSchema7 as JSONSchema,
+  JSONSchema7Definition as JSONSchemaDefinition,
 } from "npm:@types/json-schema";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
 const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
 
-const isDescriminatedUnion = (def: JSONSchema7Definition[] | undefined) => {
+const isDescriminatedUnion = (def: JSONSchemaDefinition[] | undefined) => {
   return def && typeof def[0] === "object" &&
     def[0]?.required?.includes("$type");
 };
@@ -22,6 +22,13 @@ function generateZodSchema(schema: JSONSchema) {
   const wn = (...t: string[]) => w(...t, "\n");
 
   match(schema)
+    .with(
+      { type: "boolean" },
+      (schema) =>
+        w(
+          "z.boolean()" + (schema.default ? `.optional()` : ""),
+        ),
+    )
     .with({ type: "string", enum: P.array() }, (schema) => {
       w(`z.literal("${schema.enum[0]}")`);
     })
@@ -30,6 +37,7 @@ function generateZodSchema(schema: JSONSchema) {
       w("z");
       for (const type of schema.type) {
         match(type)
+          .with("boolean", () => w(".boolean()"))
           .with("string", () => w(".string()"))
           .with("null", () => w(".nullable()"))
           .otherwise(() => {

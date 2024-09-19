@@ -1,3 +1,4 @@
+use std::borrow::{Borrow, BorrowMut};
 use std::env;
 use std::io::{self, BufRead, Write};
 use std::sync::mpsc;
@@ -5,12 +6,50 @@ use std::sync::mpsc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use tao::window::Fullscreen;
 
 #[derive(JsonSchema, Deserialize, Debug)]
 struct WebViewOptions {
     title: String,
     #[serde(flatten)]
     target: WebViewTarget,
+    /// Sets whether the window should be fullscreen.
+    #[serde(default)]
+    fullscreen: bool,
+    /// Sets whether the window should have a border, a title bar, etc.
+    #[serde(default = "default_true")]
+    decorations: bool,
+    #[serde(default)]
+    transparent: bool,
+    /// Sets whether all media can be played without user interaction.
+    #[serde(default)]
+    autoplay: bool,
+    /// Enable or disable web inspector which is usually called devtools.
+    ///
+    /// Note this only enables devtools to the webview. To open it, you can call WebView::open_devtools, or right click the page and open it from the context menu.
+    #[serde(default)]
+    devtools: bool,
+    /// Run the WebView with incognito mode. Note that WebContext will be ingored if incognito is enabled.
+    ///
+    /// Platform-specific:
+    /// - Windows: Requires WebView2 Runtime version 101.0.1210.39 or higher, does nothing on older versions, see https://learn.microsoft.com/en-us/microsoft-edge/webview2/release-notes/archive?tabs=dotnetcsharp#10121039
+    #[serde(default)]
+    incognito: bool,
+    /// Enables clipboard access for the page rendered on Linux and Windows.
+    ///
+    /// macOS doesn’t provide such method and is always enabled by default. But your app will still need to add menu item accelerators to use the clipboard shortcuts.
+    #[serde(default)]
+    clipboard: bool,
+    /// Sets whether the webview should be focused when created. Default is false.
+    #[serde(default)]
+    focused: bool,
+    /// Sets whether clicking an inactive window also clicks through to the webview. Default is false.
+    #[serde(default)]
+    accept_first_mouse: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(JsonSchema, Deserialize, Debug)]
@@ -57,16 +96,29 @@ fn main() -> wry::Result<()> {
     use wry::WebViewBuilder;
 
     let event_loop = EventLoop::new();
-    let window = WindowBuilder::new()
+    let mut window_builder = WindowBuilder::new()
         .with_title(webview_options.title)
-        .build(&event_loop)
-        .unwrap();
+        .with_transparent(webview_options.transparent)
+        .with_decorations(webview_options.decorations);
+    if webview_options.fullscreen {
+        window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+    }
+    let window = window_builder.build(&event_loop).unwrap();
 
-    let webview = match webview_options.target {
+    eprintln!("transparent: {:?}", webview_options.transparent);
+
+    let webview_builder = match webview_options.target {
         WebViewTarget::Url(url) => WebViewBuilder::new(&window).with_url(url),
         WebViewTarget::Html(html) => WebViewBuilder::new(&window).with_html(html),
     }
-    .build()?;
+    .with_transparent(webview_options.transparent)
+    .with_autoplay(webview_options.autoplay)
+    .with_incognito(webview_options.incognito)
+    .with_clipboard(webview_options.clipboard)
+    .with_focused(webview_options.focused)
+    .with_devtools(webview_options.devtools)
+    .with_accept_first_mouse(webview_options.accept_first_mouse);
+    let webview = webview_builder.build()?;
 
     let (tx, to_deno) = mpsc::channel::<WebViewEvent>();
     let (from_deno, rx) = mpsc::channel::<ClientEvent>();

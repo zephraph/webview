@@ -32,8 +32,52 @@
     "title"
   ],
   "properties": {
+    "accept_first_mouse": {
+      "description": "Sets whether clicking an inactive window also clicks through to the webview. Default is false.",
+      "default": false,
+      "type": "boolean"
+    },
+    "autoplay": {
+      "description": "Sets whether all media can be played without user interaction.",
+      "default": false,
+      "type": "boolean"
+    },
+    "clipboard": {
+      "description": "Enables clipboard access for the page rendered on Linux and Windows.\n\nmacOS doesn’t provide such method and is always enabled by default. But your app will still need to add menu item accelerators to use the clipboard shortcuts.",
+      "default": false,
+      "type": "boolean"
+    },
+    "decorations": {
+      "description": "Sets whether the window should have a border, a title bar, etc.",
+      "default": true,
+      "type": "boolean"
+    },
+    "devtools": {
+      "description": "Enable or disable web inspector which is usually called devtools.\n\nNote this only enables devtools to the webview. To open it, you can call WebView::open_devtools, or right click the page and open it from the context menu.",
+      "default": false,
+      "type": "boolean"
+    },
+    "focused": {
+      "description": "Sets whether the webview should be focused when created. Default is false.",
+      "default": false,
+      "type": "boolean"
+    },
+    "fullscreen": {
+      "description": "Sets whether the window should be fullscreen.",
+      "default": false,
+      "type": "boolean"
+    },
+    "incognito": {
+      "description": "Run the WebView with incognito mode. Note that WebContext will be ingored if incognito is enabled.\n\nPlatform-specific: - Windows: Requires WebView2 Runtime version 101.0.1210.39 or higher, does nothing on older versions, see https://learn.microsoft.com/en-us/microsoft-edge/webview2/release-notes/archive?tabs=dotnetcsharp#10121039",
+      "default": false,
+      "type": "boolean"
+    },
     "title": {
       "type": "string"
+    },
+    "transparent": {
+      "default": false,
+      "type": "boolean"
     }
   }
 }
