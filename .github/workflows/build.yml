@@ -58,9 +58,9 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cross (for Windows build)
+      - name: Install cargo-xwin (for Windows build)
         if: matrix.target == 'x86_64-pc-windows-msvc'
-        run: cargo install cross
+        run: cargo install cargo-xwin
 
       - name: Set build flags
         id: build_flags
@@ -83,7 +83,7 @@ jobs:
 
       - name: Build (Windows)
         if: matrix.target == 'x86_64-pc-windows-msvc'
-        run: cross build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+        run: cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
