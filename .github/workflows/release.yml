@@ -2,7 +2,7 @@ name: Release Rust Binary
 
 on:
   workflow_run:
-    workflows: ["Build Rust Binary"]
+    workflows: ["Rust Binary"]
     types:
       - completed
     branches: [main]

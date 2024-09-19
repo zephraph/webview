@@ -1,4 +1,4 @@
-name: Build Rust Binary
+name: Rust Binary
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-rust-check-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml', '**/*.rs') }}
+          key: ${{ runner.os }}-rust-check-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
       - name: Exit early on cache hit
         if: steps.cache-rust.outputs.cache-hit == 'true'
@@ -61,7 +61,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-rust-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml', '**/*.rs') }}
+          key: ${{ runner.os }}-rust-${{ matrix.target }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
       - name: Exit early on cache hit
         if: steps.cache-rust.outputs.cache-hit == 'true'
@@ -80,8 +80,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev
 
-      - name: Install cargo-xwin (for Windows build)
+      - name: Get cargo-xwin version
         if: matrix.target == 'x86_64-pc-windows-msvc'
+        id: cargo-xwin-version
+        run: |
+          VERSION=$(cargo search cargo-xwin --limit 1 | awk -F '"' '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache cargo-xwin
+        uses: actions/cache@v4
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        id: cache-cargo-xwin
+        with:
+          path: ~/.cargo/bin/cargo-xwin
+          key: ${{ runner.os }}-cargo-xwin-${{ steps.cargo-xwin-version.outputs.version }}-${{ hashFiles('rust-toolchain.toml') }}
+
+      - name: Install cargo-xwin (for Windows build)
+        if: matrix.target == 'x86_64-pc-windows-msvc' && steps.cache-cargo-xwin.outputs.cache-hit != 'true'
         run: cargo install cargo-xwin
 
       - name: Set build flags
