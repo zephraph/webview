@@ -12,6 +12,8 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
