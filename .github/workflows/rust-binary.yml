@@ -4,8 +4,8 @@ on:
   push:
 
 jobs:
-  check:
-    name: Check
+  test:
+    name: Test
     runs-on: macos-latest
     permissions:
       actions: write
@@ -22,19 +22,28 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-rust-check-${{ hashFiles('.github/workflows/rust-binary.yml', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
+          key: ${{ runner.os }}-rust-test-${{ hashFiles('.github/workflows/rust-binary.yml', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
       - name: Install Rust
         if: steps.cache-rust.outputs.cache-hit != 'true'
         uses: oxidecomputer/actions-rs_toolchain@oxide/master
 
-      - name: Run cargo check
+      - name: Run cargo test
         if: steps.cache-rust.outputs.cache-hit != 'true'
-        run: cargo check
+        run: cargo test
+
+      - name: Check for changed files
+        if: steps.cache-rust.outputs.cache-hit != 'true'
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "Files have changed after running tests:"
+            git status --porcelain
+            exit 1
+          fi
 
   build:
-    needs: check
-    if: needs.check.outputs.cached != 'true'
+    needs: test
+    if: needs.test.outputs.cached != 'true'
     name: Build on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
