@@ -9,6 +9,8 @@ jobs:
     runs-on: macos-latest
     permissions:
       actions: write
+    outputs:
+      cached: ${{ steps.cache-rust.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,25 +24,17 @@ jobs:
             target
           key: ${{ runner.os }}-rust-check-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
-      - name: Result cached; cancel
-        if: steps.cache-rust.outputs.cache-hit == 'true'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          gh run cancel ${{ github.run_id }}
-          gh run watch ${{ github.run_id }}
-
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        if: steps.cache-rust.outputs.cache-hit != 'true'
+        uses: oxidecomputer/actions-rs_toolchain@oxide/master
 
       - name: Run cargo check
+        if: steps.cache-rust.outputs.cache-hit != 'true'
         run: cargo check
 
   build:
     needs: check
+    if: needs.check.outputs.cached != 'true'
     name: Build on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -59,23 +53,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Rust
-        uses: actions/cache@v4
-        id: cache-rust
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-rust-${{ matrix.target }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
-
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        if: steps.cache-rust.outputs.cache-hit != 'true'
+        uses: oxidecomputer/actions-rs_toolchain@oxide/master
         with:
-          toolchain: stable
           target: ${{ matrix.target }}
-          override: true
 
       - name: Install libwebkit2gtk (Linux)
         if: matrix.target == 'x86_64-unknown-linux-gnu'
@@ -114,19 +95,18 @@ jobs:
           fi
 
       - name: Build (non-Windows, non-aarch64-apple)
-        if: steps.cache-rust.outputs.cache-hit != 'true' && matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
+        if: matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
         run: cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Build (aarch64-apple-darwin)
-        if: steps.cache-rust.outputs.cache-hit != 'true' && matrix.target == 'aarch64-apple-darwin'
+        if: matrix.target == 'aarch64-apple-darwin'
         run: SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Build (Windows)
-        if: steps.cache-rust.outputs.cache-hit != 'true' && matrix.target == 'x86_64-pc-windows-msvc'
+        if: matrix.target == 'x86_64-pc-windows-msvc'
         run: cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Upload artifact
-        if: steps.cache-rust.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
