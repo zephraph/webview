@@ -11,7 +11,7 @@ const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
 
 const isDescriminatedUnion = (def: JSONSchemaDefinition[] | undefined) => {
   return def && typeof def[0] === "object" &&
-    def[0]?.required?.includes("$type");
+    (def[0]?.required?.[0] + "").startsWith("$");
 };
 
 function generateZodSchema(schema: JSONSchema) {
@@ -50,7 +50,7 @@ function generateZodSchema(schema: JSONSchema) {
       oneOf: P.when(isDescriminatedUnion),
     }, (schema) => {
       // @ts-expect-error This is fine, this code path should never be a boolean
-      const descrim = schema.oneOf[0]?.required[0];
+      const [descrim, content = "data"] = schema.oneOf[0]?.required;
       wn(`z.discriminatedUnion("${descrim}", [`);
       for (const s of schema.oneOf ?? []) {
         if (typeof s === "boolean") {
@@ -68,8 +68,8 @@ function generateZodSchema(schema: JSONSchema) {
           );
         }
         // Ensure `data` is always defined in descriminated unions
-        if (!("data" in s.properties!)) {
-          w("data: z.undefined().optional(),");
+        if (!(content in s.properties!)) {
+          w(`${content}: z.undefined().optional(),`);
         }
         w(`}),`);
       }
