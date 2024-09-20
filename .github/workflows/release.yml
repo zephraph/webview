@@ -24,7 +24,7 @@ jobs:
       - name: Check for artifacts
         id: check_artifacts
         run: |
-          if [ -z "$(find . -name 'webview_deno_rust*')" ]; then
+          if [ -z "$(find . -name 'deno-webview*')" ]; then
             echo "No artifacts found. Exiting successfully."
             echo "artifacts_found=false" >> $GITHUB_OUTPUT
           else
@@ -45,17 +45,8 @@ jobs:
         with:
           tag: v${{ steps.get_version.outputs.version }}
           name: Release ${{ steps.get_version.outputs.version }}
-          draft: false
-          prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: "binary-*/webview_deno_rust*"
-          allowUpdates: true
+          prerelease: true
+          skipIfReleaseExists: true
+          artifacts: "release-binary-*/deno-webview*"
           artifactErrorsFailBuild: true
-
-      - name: Release Status
-        if: steps.check_artifacts.outputs.artifacts_found == 'true'
-        run: echo "Release v${{ steps.get_version.outputs.version }} created or updated."
-
-      - name: No Release Status
-        if: steps.check_artifacts.outputs.artifacts_found == 'false'
-        run: echo "No new release created as no new artifacts were found."
