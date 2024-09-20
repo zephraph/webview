@@ -4,37 +4,46 @@ on:
   push:
 
 jobs:
-  check:
-    name: Check
+  test:
+    name: Test
     runs-on: macos-latest
     permissions:
       actions: write
     outputs:
-      cached: ${{ steps.cache-rust.outputs.cache-hit }}
+      changed: ${{ steps.rust-changed.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Rust
+      # This is a hack, it's just used to exit early if nothing has changed
+      - name: Check for changes to Rust files
         uses: actions/cache@v4
-        id: cache-rust
+        id: rust-changed
         with:
+          lookup-only: true
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-rust-check-${{ hashFiles('.github/workflows/rust-binary.yml', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
+            .gitignore
+          key: ${{ runner.os }}-rust-test-${{ hashFiles('.github/workflows/rust-binary.yml', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
       - name: Install Rust
-        if: steps.cache-rust.outputs.cache-hit != 'true'
+        if: steps.rust-changed.outputs.cache-hit != 'true'
         uses: oxidecomputer/actions-rs_toolchain@oxide/master
 
-      - name: Run cargo check
-        if: steps.cache-rust.outputs.cache-hit != 'true'
-        run: cargo check
+      - name: Run cargo test
+        if: steps.rust-changed.outputs.cache-hit != 'true'
+        run: cargo test
+
+      - name: Check for changed files
+        if: steps.rust-changed.outputs.cache-hit != 'true'
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "Files have changed after running tests:"
+            git status --porcelain
+            exit 1
+          fi
 
   build:
-    needs: check
-    if: needs.check.outputs.cached != 'true'
+    needs: test
+    if: needs.test.outputs.changed != 'true'
     name: Build on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
