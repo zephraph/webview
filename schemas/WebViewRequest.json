@@ -1,12 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ClientEvent",
+  "title": "Request",
+  "description": "Explicit requests from the client to the webview.",
   "oneOf": [
     {
       "type": "object",
       "required": [
         "$type",
-        "data"
+        "id",
+        "js"
       ],
       "properties": {
         "$type": {
@@ -15,7 +17,10 @@
             "eval"
           ]
         },
-        "data": {
+        "id": {
+          "type": "string"
+        },
+        "js": {
           "type": "string"
         }
       }
@@ -24,7 +29,8 @@
       "type": "object",
       "required": [
         "$type",
-        "data"
+        "id",
+        "title"
       ],
       "properties": {
         "$type": {
@@ -33,7 +39,10 @@
             "setTitle"
           ]
         },
-        "data": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
           "type": "string"
         }
       }
@@ -41,7 +50,8 @@
     {
       "type": "object",
       "required": [
-        "$type"
+        "$type",
+        "id"
       ],
       "properties": {
         "$type": {
@@ -49,13 +59,17 @@
           "enum": [
             "getTitle"
           ]
+        },
+        "id": {
+          "type": "string"
         }
       }
     },
     {
       "type": "object",
       "required": [
-        "$type"
+        "$type",
+        "id"
       ],
       "properties": {
         "$type": {
@@ -63,6 +77,9 @@
           "enum": [
             "openDevTools"
           ]
+        },
+        "id": {
+          "type": "string"
         }
       }
     }

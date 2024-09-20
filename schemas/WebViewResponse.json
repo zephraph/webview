@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Response",
+  "description": "Responses from the webview to the client.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "ack"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id",
+        "result"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "result"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/ResultType"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id",
+        "message"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "err"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "ResultType": {
+      "description": "Types that can be returned from webview results.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "$type",
+            "value"
+          ],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "string"
+              ]
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "$type",
+            "value"
+          ],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "json"
+              ]
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -59,28 +59,61 @@ enum WebViewTarget {
     Html(String),
 }
 
+// --- RPC Definitions ---
+
+/// Complete definition of all outbound messages from the webview to the client.
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type", content = "data")]
-enum WebViewEvent {
-    Started,
-    Closed,
-    GetTitle(String),
-
-    // Responses
-    SetTitleDone,
-    OpenDevToolsDone,
-    EvalDone(Option<String>),
+enum Message {
+    Notification(Notification),
+    Response(Response),
 }
 
+/// Messages that are sent unbidden from the webview to the client.
+#[derive(JsonSchema, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "$type")]
+enum Notification {
+    Started,
+    Closed,
+}
+
+/// Explicit requests from the client to the webview.
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "$type", content = "data")]
-enum ClientEvent {
-    Eval(String),
-    SetTitle(String),
-    GetTitle,
-    OpenDevTools,
+#[serde(tag = "$type")]
+enum Request {
+    Eval { id: String, js: String },
+    SetTitle { id: String, title: String },
+    GetTitle { id: String },
+    OpenDevTools { id: String },
+}
+
+/// Responses from the webview to the client.
+#[derive(JsonSchema, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "$type")]
+enum Response {
+    Ack { id: String },
+    Result { id: String, result: ResultType },
+    Err { id: String, message: String },
+}
+
+/// Types that can be returned from webview results.
+#[derive(JsonSchema, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "$type", content = "value")]
+#[allow(dead_code)]
+enum ResultType {
+    String(String),
+    Json(String),
+}
+
+impl From<String> for ResultType {
+    fn from(value: String) -> Self {
+        ResultType::String(value)
+    }
 }
 
 fn main() -> wry::Result<()> {
@@ -119,9 +152,20 @@ fn main() -> wry::Result<()> {
     .with_accept_first_mouse(webview_options.accept_first_mouse);
     let webview = webview_builder.build()?;
 
-    let (tx, to_deno) = mpsc::channel::<WebViewEvent>();
-    let (from_deno, rx) = mpsc::channel::<ClientEvent>();
+    let (tx, to_deno) = mpsc::channel::<Message>();
+    let (from_deno, rx) = mpsc::channel::<Request>();
 
+    let notify_tx = tx.clone();
+    let notify = move |notification: Notification| {
+        notify_tx.send(Message::Notification(notification)).unwrap();
+    };
+
+    let res_tx = tx.clone();
+    let res = move |response: Response| {
+        res_tx.send(Message::Response(response)).unwrap();
+    };
+
+    // Handle messages from the webview to the client.
     std::thread::spawn(move || {
         let stdout = std::io::stdout();
         let mut stdout_lock = stdout.lock();
@@ -142,6 +186,7 @@ fn main() -> wry::Result<()> {
         }
     });
 
+    // Handle messages from the client to the webview.
     std::thread::spawn(move || {
         let stdin = io::stdin();
         let mut stdin = stdin.lock();
@@ -154,7 +199,7 @@ fn main() -> wry::Result<()> {
             // Remove null byte
             buf.pop();
 
-            match serde_json::from_slice::<ClientEvent>(&buf) {
+            match serde_json::from_slice::<Request>(&buf) {
                 Ok(event) => from_deno.send(event).unwrap(),
                 Err(e) => eprintln!("Failed to deserialize: {:?}", e),
             }
@@ -166,7 +211,7 @@ fn main() -> wry::Result<()> {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::NewEvents(StartCause::Init) => tx.send(WebViewEvent::Started).unwrap(),
+            Event::NewEvents(StartCause::Init) => notify(Notification::Started),
             Event::UserEvent(event) => {
                 eprintln!("User event: {:?}", event);
             }
@@ -174,31 +219,44 @@ fn main() -> wry::Result<()> {
                 event: WindowEvent::CloseRequested,
                 ..
             } => {
-                tx.send(WebViewEvent::Closed).unwrap();
+                notify(Notification::Closed);
                 *control_flow = ControlFlow::Exit
             }
             Event::MainEventsCleared => {
-                if let Ok(event) = rx.try_recv() {
+                if let Ok(req) = rx.try_recv() {
                     eprintln!("Received event: {:?}", event);
-                    match event {
-                        ClientEvent::Eval(js) => {
+                    match req {
+                        Request::Eval { id, js } => {
                             let result = webview.evaluate_script(&js);
-                            tx.send(WebViewEvent::EvalDone(match result {
-                                Ok(_) => None,
-                                Err(err) => Some(err.to_string()),
-                            }))
-                            .unwrap();
+                            res(match result {
+                                Ok(_) => Response::Ack { id },
+                                Err(err) => Response::Err {
+                                    id,
+                                    message: err.to_string(),
+                                },
+                            });
                         }
-                        ClientEvent::OpenDevTools => {
-                            webview.open_devtools();
-                            tx.send(WebViewEvent::OpenDevToolsDone).unwrap();
-                        }
-                        ClientEvent::SetTitle(title) => {
+                        Request::SetTitle { id, title } => {
                             window.set_title(title.as_str());
-                            tx.send(WebViewEvent::SetTitleDone).unwrap();
+                            res(Response::Ack { id });
                         }
-                        ClientEvent::GetTitle => {
-                            tx.send(WebViewEvent::GetTitle(window.title())).unwrap();
+                        Request::GetTitle { id } => res(Response::Result {
+                            id,
+                            result: window.title().into(),
+                        }),
+                        Request::OpenDevTools { id } => {
+                            #[cfg(feature = "devtools")]
+                            {
+                                webview.open_devtools();
+                                res(Response::Ack { id });
+                            }
+                            #[cfg(not(feature = "devtools"))]
+                            {
+                                res(Response::Err {
+                                    id,
+                                    message: "DevTools not enabled".to_string(),
+                                });
+                            }
                         }
                     }
                 }
@@ -219,8 +277,9 @@ mod tests {
     fn generate_json_schemas() {
         let schemas = [
             ("WebViewOptions", schema_for!(WebViewOptions)),
-            ("WebViewEvent", schema_for!(WebViewEvent)),
-            ("ClientEvent", schema_for!(ClientEvent)),
+            ("WebViewMessage", schema_for!(Message)),
+            ("WebViewRequest", schema_for!(Request)),
+            ("WebViewResponse", schema_for!(Response)),
         ];
 
         for (name, schema) in schemas {
