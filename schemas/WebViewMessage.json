@@ -2,12 +2,42 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Message",
   "description": "Complete definition of all outbound messages from the webview to the client.",
-  "anyOf": [
+  "oneOf": [
     {
-      "$ref": "#/definitions/Notification"
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "notification"
+          ]
+        },
+        "data": {
+          "$ref": "#/definitions/Notification"
+        }
+      }
     },
     {
-      "$ref": "#/definitions/Response"
+      "type": "object",
+      "required": [
+        "$type",
+        "data"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "response"
+          ]
+        },
+        "data": {
+          "$ref": "#/definitions/Response"
+        }
+      }
     }
   ],
   "definitions": {
@@ -51,7 +81,7 @@
           "type": "object",
           "required": [
             "$type",
-            "data"
+            "id"
           ],
           "properties": {
             "$type": {
@@ -60,16 +90,8 @@
                 "ack"
               ]
             },
-            "data": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                }
-              }
+            "id": {
+              "type": "string"
             }
           }
         },
@@ -77,7 +99,8 @@
           "type": "object",
           "required": [
             "$type",
-            "data"
+            "id",
+            "result"
           ],
           "properties": {
             "$type": {
@@ -86,20 +109,11 @@
                 "result"
               ]
             },
-            "data": {
-              "type": "object",
-              "required": [
-                "id",
-                "result"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "result": {
-                  "$ref": "#/definitions/ResultType"
-                }
-              }
+            "id": {
+              "type": "string"
+            },
+            "result": {
+              "$ref": "#/definitions/ResultType"
             }
           }
         },
@@ -107,7 +121,8 @@
           "type": "object",
           "required": [
             "$type",
-            "data"
+            "id",
+            "message"
           ],
           "properties": {
             "$type": {
@@ -116,50 +131,11 @@
                 "err"
               ]
             },
-            "data": {
-              "type": "object",
-              "required": [
-                "id",
-                "message"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "$type",
-            "data"
-          ],
-          "properties": {
-            "$type": {
-              "type": "string",
-              "enum": [
-                "unsupported"
-              ]
+            "id": {
+              "type": "string"
             },
-            "data": {
-              "type": "object",
-              "required": [
-                "id",
-                "message"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                }
-              }
+            "message": {
+              "type": "string"
             }
           }
         }
@@ -171,26 +147,38 @@
         {
           "type": "object",
           "required": [
-            "string"
+            "$type",
+            "value"
           ],
           "properties": {
-            "string": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "string"
+              ]
+            },
+            "value": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
           "required": [
-            "jSON"
+            "$type",
+            "value"
           ],
           "properties": {
-            "jSON": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "json"
+              ]
+            },
+            "value": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

@@ -35,47 +35,48 @@ export const WebViewRequest = z.discriminatedUnion("$type", [
 
 export type WebViewRequest = z.infer<typeof WebViewRequest>;
 
-export const WebViewMessage = z.union([
-  z.discriminatedUnion("$type", [
-    z.object({ $type: z.literal("started") }),
-    z.object({ $type: z.literal("closed") }),
-  ]),
-  z.discriminatedUnion("$type", [
-    z.object({
-      $type: z.literal("ack"),
-      data: z.object({
+export const WebViewResponse = z.discriminatedUnion("$type", [
+  z.object({ $type: z.literal("ack"), id: z.string() }),
+  z.object({
+    $type: z.literal("result"),
+    id: z.string(),
+    result: z.discriminatedUnion("$type", [
+      z.object({ $type: z.literal("string"), value: z.string() }),
+      z.object({ $type: z.literal("json"), value: z.string() }),
+    ]),
+  }),
+  z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
+]);
+
+export type WebViewResponse = z.infer<typeof WebViewResponse>;
+
+export const WebViewMessage = z.discriminatedUnion("$type", [
+  z.object({
+    $type: z.literal("notification"),
+    data: z.discriminatedUnion("$type", [
+      z.object({ $type: z.literal("started") }),
+      z.object({ $type: z.literal("closed") }),
+    ]),
+  }),
+  z.object({
+    $type: z.literal("response"),
+    data: z.discriminatedUnion("$type", [
+      z.object({ $type: z.literal("ack"), id: z.string() }),
+      z.object({
+        $type: z.literal("result"),
         id: z.string(),
-      }),
-    }),
-    z.object({
-      $type: z.literal("result"),
-      data: z.object({
-        id: z.string(),
-        result: z.union([
-          z.object({
-            string: z.string(),
-          }),
-          z.object({
-            jSON: z.string(),
-          }),
+        result: z.discriminatedUnion("$type", [
+          z.object({ $type: z.literal("string"), value: z.string() }),
+          z.object({ $type: z.literal("json"), value: z.string() }),
         ]),
       }),
-    }),
-    z.object({
-      $type: z.literal("err"),
-      data: z.object({
+      z.object({
+        $type: z.literal("err"),
         id: z.string(),
         message: z.string(),
       }),
-    }),
-    z.object({
-      $type: z.literal("unsupported"),
-      data: z.object({
-        id: z.string(),
-        message: z.string(),
-      }),
-    }),
-  ]),
+    ]),
+  }),
 ]);
 
 export type WebViewMessage = z.infer<typeof WebViewMessage>;

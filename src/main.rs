@@ -64,7 +64,7 @@ enum WebViewTarget {
 /// Complete definition of all outbound messages from the webview to the client.
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-#[serde(untagged)]
+#[serde(tag = "$type", content = "data")]
 enum Message {
     Notification(Notification),
     Response(Response),
@@ -93,20 +93,21 @@ enum Request {
 /// Responses from the webview to the client.
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "$type", content = "data")]
+#[serde(tag = "$type")]
 enum Response {
     Ack { id: String },
     Result { id: String, result: ResultType },
     Err { id: String, message: String },
-    Unsupported { id: String, message: String },
 }
 
 /// Types that can be returned from webview results.
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[serde(tag = "$type", content = "value")]
+#[allow(dead_code)]
 enum ResultType {
     String(String),
-    JSON(String),
+    Json(String),
 }
 
 impl From<String> for ResultType {
@@ -251,7 +252,7 @@ fn main() -> wry::Result<()> {
                             }
                             #[cfg(not(feature = "devtools"))]
                             {
-                                res(Response::Unsupported {
+                                res(Response::Err {
                                     id,
                                     message: "DevTools not enabled".to_string(),
                                 });
@@ -278,6 +279,7 @@ mod tests {
             ("WebViewOptions", schema_for!(WebViewOptions)),
             ("WebViewMessage", schema_for!(Message)),
             ("WebViewRequest", schema_for!(Request)),
+            ("WebViewResponse", schema_for!(Response)),
         ];
 
         for (name, schema) in schemas {
