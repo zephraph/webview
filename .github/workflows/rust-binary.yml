@@ -1,0 +1,117 @@
+name: Rust Binary
+
+on:
+  push:
+
+jobs:
+  check:
+    name: Check
+    runs-on: macos-latest
+    permissions:
+      actions: write
+    outputs:
+      cached: ${{ steps.cache-rust.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Rust
+        uses: actions/cache@v4
+        id: cache-rust
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-rust-check-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
+
+      - name: Install Rust
+        if: steps.cache-rust.outputs.cache-hit != 'true'
+        uses: oxidecomputer/actions-rs_toolchain@oxide/master
+
+      - name: Run cargo check
+        if: steps.cache-rust.outputs.cache-hit != 'true'
+        run: cargo check
+
+  build:
+    needs: check
+    if: needs.check.outputs.cached != 'true'
+    name: Build on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: ${{ github.ref == 'refs/heads/main' }}
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: oxidecomputer/actions-rs_toolchain@oxide/master
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Install libwebkit2gtk (Linux)
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev
+
+      - name: Get cargo-xwin version
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        id: cargo-xwin-version
+        run: |
+          VERSION=$(cargo search cargo-xwin --limit 1 | awk -F '"' '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache cargo-xwin
+        uses: actions/cache@v4
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        id: cache-cargo-xwin
+        with:
+          path: ~/.cargo/bin/cargo-xwin
+          key: ${{ runner.os }}-cargo-xwin-${{ steps.cargo-xwin-version.outputs.version }}-${{ hashFiles('rust-toolchain.toml') }}
+
+      - name: Install cargo-xwin (for Windows build)
+        if: matrix.target == 'x86_64-pc-windows-msvc' && steps.cache-cargo-xwin.outputs.cache-hit != 'true'
+        run: cargo install cargo-xwin
+
+      - name: Set build flags
+        id: build_flags
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "flags=--release" >> $GITHUB_OUTPUT
+            echo "build_type=release" >> $GITHUB_OUTPUT
+          else
+            echo "flags=" >> $GITHUB_OUTPUT
+            echo "build_type=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build (non-Windows, non-aarch64-apple)
+        if: matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
+        run: cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+
+      - name: Build (aarch64-apple-darwin)
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+
+      - name: Build (Windows)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview_deno_rust*
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deps
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/build
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/.fingerprint

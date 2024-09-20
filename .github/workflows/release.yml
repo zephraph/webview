@@ -1,0 +1,61 @@
+name: Release Rust Binary
+
+on:
+  workflow_run:
+    workflows: ["Rust Binary"]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          run-id: ${{github.event.workflow_run.id}}
+
+      - name: Check for artifacts
+        id: check_artifacts
+        run: |
+          if [ -z "$(find . -name 'webview_deno_rust*')" ]; then
+            echo "No artifacts found. Exiting successfully."
+            echo "artifacts_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "Artifacts found. Proceeding with release."
+            echo "artifacts_found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get version from Cargo.toml
+        if: steps.check_artifacts.outputs.artifacts_found == 'true'
+        id: get_version
+        run: |
+          VERSION=$(grep '^version =' Cargo.toml | sed 's/.*= *"//' | sed 's/".*//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        if: steps.check_artifacts.outputs.artifacts_found == 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "binary-*/webview_deno_rust*"
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+
+      - name: Release Status
+        if: steps.check_artifacts.outputs.artifacts_found == 'true'
+        run: echo "Release v${{ steps.get_version.outputs.version }} created or updated."
+
+      - name: No Release Status
+        if: steps.check_artifacts.outputs.artifacts_found == 'false'
+        run: echo "No new release created as no new artifacts were found."

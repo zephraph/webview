@@ -9,6 +9,7 @@ use tao::window::Fullscreen;
 
 #[derive(JsonSchema, Deserialize, Debug)]
 struct WebViewOptions {
+    /// Sets the title of the window.
     title: String,
     #[serde(flatten)]
     target: WebViewTarget,
