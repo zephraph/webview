@@ -22,7 +22,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-rust-check-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
+          key: ${{ runner.os }}-rust-check-${{ hashFiles('.github/workflows/rust-binary.yml', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
 
       - name: Install Rust
         if: steps.cache-rust.outputs.cache-hit != 'true'
@@ -111,7 +111,7 @@ jobs:
         with:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
           path: |
-            target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview_deno_rust*
+            target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview*
             !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deps
             !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/build
             !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/.fingerprint
