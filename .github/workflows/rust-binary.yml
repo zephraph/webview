@@ -107,7 +107,7 @@ jobs:
         run: cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
           path: |
