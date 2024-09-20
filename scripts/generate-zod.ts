@@ -14,28 +14,39 @@ const isDescriminatedUnion = (def: JSONSchemaDefinition[] | undefined) => {
     (def[0]?.required?.[0] + "").startsWith("$");
 };
 
-function generateZodSchema(schema: JSONSchema) {
+function generateZodSchema(schema: JSONSchema, node?: JSONSchema | boolean) {
+  if (!node) {
+    node = schema;
+  }
+  // Work around the fact that JSONSchema7Definition is a union of JSONSchema and boolean
+  if (typeof node === "boolean") {
+    return "z.boolean()";
+  }
   let zodSchema = "";
   const w = (...t: string[]) => {
     zodSchema += t.join(" ");
   };
   const wn = (...t: string[]) => w(...t, "\n");
 
-  match(schema)
+  match(node)
     .with(
       { type: "boolean" },
-      (schema) =>
+      (node) =>
         w(
-          "z.boolean()" + (schema.default ? `.optional()` : ""),
+          "z.boolean()" + (node.default ? `.optional()` : ""),
         ),
     )
-    .with({ type: "string", enum: P.array() }, (schema) => {
-      w(`z.literal("${schema.enum[0]}")`);
+    .with({ type: "string", enum: P.array() }, (node) => {
+      w(`z.literal("${node.enum[0]}")`);
     })
     .with({ type: "string" }, () => w("z.string()"))
-    .with({ type: P.array(P.string) }, (schema) => {
+    .with({ $ref: P.select() }, (ref) => {
+      const def = ref!.split("/").pop()!;
+      w(generateZodSchema(schema, schema.definitions![def]));
+    })
+    .with({ type: P.array(P.string) }, (node) => {
       w("z");
-      for (const type of schema.type) {
+      for (const type of node.type) {
         match(type)
           .with("boolean", () => w(".boolean()"))
           .with("string", () => w(".string()"))
@@ -46,13 +57,15 @@ function generateZodSchema(schema: JSONSchema) {
       }
     })
     .with({
-      title: P.string,
       oneOf: P.when(isDescriminatedUnion),
-    }, (schema) => {
+    }, (node) => {
       // @ts-expect-error This is fine, this code path should never be a boolean
-      const [descrim, content = "data"] = schema.oneOf[0]?.required;
+      const [descrim, content = "data"] = node.oneOf[0]?.required;
+      const hasContent = node.oneOf?.some((s) =>
+        typeof s === "object" && s?.required?.length && s.required.length >= 2
+      );
       wn(`z.discriminatedUnion("${descrim}", [`);
-      for (const s of schema.oneOf ?? []) {
+      for (const s of node.oneOf ?? []) {
         if (typeof s === "boolean") {
           w(`z.boolean(),`);
           continue;
@@ -63,56 +76,59 @@ function generateZodSchema(schema: JSONSchema) {
             `${key}:`,
             typeof value === "boolean"
               ? value.toString()
-              : generateZodSchema(value),
+              : generateZodSchema(schema, value),
             ",",
           );
         }
-        // Ensure `data` is always defined in descriminated unions
-        if (!(content in s.properties!)) {
+        // Ensure content is always defined in descriminated unions that have it
+        if (hasContent && !(content in s.properties!)) {
           w(`${content}: z.undefined().optional(),`);
         }
         w(`}),`);
       }
       wn("])");
     })
-    .with({ title: P.string, oneOf: P.array() }, (schema) => {
-      if (schema.properties) {
+    .with({ oneOf: P.array() }, (node) => {
+      if (node.properties) {
         wn("z.intersection(");
         wn("z.object({");
-        for (const [key, value] of Object.entries(schema.properties!)) {
-          const required = schema.required?.includes(key) ?? false;
+        for (const [key, value] of Object.entries(node.properties!)) {
+          const required = node.required?.includes(key) ?? false;
           w(
             `${key}:`,
-            typeof value === "boolean"
-              ? value.toString()
-              : generateZodSchema(value) + (required ? "" : ".optional()"),
+            generateZodSchema(schema, value) + (required ? "" : ".optional()"),
             ",",
           );
         }
         wn("}),");
       }
       wn("z.union([");
-      for (const s of schema.oneOf ?? []) {
+      for (const s of node.oneOf ?? []) {
         if (typeof s === "boolean") {
           w("z.boolean(),");
           continue;
         }
-        w(generateZodSchema(s), ",");
+        w(generateZodSchema(schema, s), ",");
       }
       wn("])");
-      if (schema.properties) {
+      if (node.properties) {
         wn(")");
       }
     })
-    .with({ type: "object" }, (schema) => {
+    .with({ anyOf: P.array() }, (node) => {
+      wn("z.union([");
+      for (const s of node.anyOf ?? []) {
+        w(generateZodSchema(schema, s), ",");
+      }
+      wn("])");
+    })
+    .with({ type: "object" }, (node) => {
       wn("z.object({");
-      for (const [key, value] of Object.entries(schema.properties!)) {
-        const required = schema.required?.includes(key) ?? false;
+      for (const [key, value] of Object.entries(node.properties!)) {
+        const required = node.required?.includes(key) ?? false;
         w(
           `${key}:`,
-          typeof value === "boolean"
-            ? value.toString()
-            : generateZodSchema(value) + (required ? "" : ".optional()"),
+          generateZodSchema(schema, value) + (required ? "" : ".optional()"),
           ",",
         );
       }
@@ -133,7 +149,7 @@ async function main() {
         await Deno.readTextFile(entry.path),
       );
       const schemaName = basename(entry.path, ".json");
-      const schema = await generateZodSchema(jsonSchema);
+      const schema = generateZodSchema(jsonSchema);
       output += `
         export const ${schemaName} = ${schema}
         export type ${schemaName} = z.infer<typeof ${schemaName}>;
