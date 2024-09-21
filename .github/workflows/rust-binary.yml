@@ -153,4 +153,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
-          path: ${{ matrix.binary_name }}
+          path: ${{ matrix.binary_name }}*
