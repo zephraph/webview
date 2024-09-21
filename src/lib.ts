@@ -7,6 +7,9 @@ import {
 } from "./schemas.ts";
 import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except } from "npm:type-fest";
+import { join } from "jsr:@std/path";
+import { ensureDir } from "jsr:@std/fs";
+import { exists } from "jsr:@std/fs";
 
 type JSON =
   | string
@@ -68,7 +71,82 @@ const returnAck = (result: WebViewResponse) => {
   }
 };
 
-export class WebView implements Disposable {
+async function getWebViewBin(options: WebViewOptions) {
+  if (Deno.permissions.querySync({ name: "env" }).state === "granted") {
+    const binPath = Deno.env.get("WEBVIEW_BIN");
+    if (binPath) return binPath;
+  }
+
+  const flags = options.devtools
+    ? "-devtools"
+    : options.transparent && Deno.build.os === "darwin"
+    ? "-transparent"
+    : "";
+
+  const cacheDir = getCacheDir();
+  const fileName = `deno-webview${flags}${
+    Deno.build.os === "windows" ? ".exe" : ""
+  }`;
+  const filePath = join(cacheDir, fileName);
+
+  // Check if the file already exists in cache
+  if (await exists(filePath)) {
+    return filePath;
+  }
+
+  // If not in cache, download it
+  let url =
+    "https://github.com/zephraph/webview/releases/download/v0.1.3/deno-webview";
+  switch (Deno.build.os) {
+    case "darwin": {
+      url += "-mac" + flags;
+      break;
+    }
+    case "linux": {
+      url += "-linux" + flags;
+      break;
+    }
+    case "windows": {
+      url += "-windows" + flags + ".exe";
+      break;
+    }
+    default:
+      throw new Error("unsupported OS");
+  }
+
+  const res = await fetch(url);
+
+  // Ensure the cache directory exists
+  await ensureDir(cacheDir);
+
+  // Write the binary to disk
+  await Deno.writeFile(filePath, new Uint8Array(await res.arrayBuffer()), {
+    mode: 0o755,
+  });
+
+  return filePath;
+}
+
+// Helper function to get the OS-specific cache directory
+function getCacheDir(): string {
+  switch (Deno.build.os) {
+    case "darwin":
+      return join(Deno.env.get("HOME")!, "Library", "Caches", "deno-webview");
+    case "linux":
+      return join(Deno.env.get("HOME")!, ".cache", "deno-webview");
+    case "windows":
+      return join(Deno.env.get("LOCALAPPDATA")!, "deno-webview", "Cache");
+    default:
+      throw new Error("Unsupported OS");
+  }
+}
+
+export async function createWebView(options: WebViewOptions) {
+  const binPath = await getWebViewBin(options);
+  return new WebView(options, binPath);
+}
+
+class WebView implements Disposable {
   #process: Deno.ChildProcess;
   #stdin: WritableStreamDefaultWriter;
   #stdout: ReadableStreamDefaultReader;
@@ -77,8 +155,8 @@ export class WebView implements Disposable {
   #externalEvent = new EventEmitter();
   #messageLoop: Promise<void>;
 
-  constructor(options: WebViewOptions) {
-    this.#process = new Deno.Command("./target/debug/deno-webview", {
+  constructor(options: WebViewOptions, binPath: string) {
+    this.#process = new Deno.Command(binPath, {
       args: [JSON.stringify(options)],
       stdin: "piped",
       stdout: "piped",
