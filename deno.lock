@@ -2,12 +2,18 @@
   "version": "3",
   "packages": {
     "specifiers": {
+      "jsr:@denosaurs/plug": "jsr:@denosaurs/plug@1.0.6",
       "jsr:@denosaurs/plug@^1.0.5": "jsr:@denosaurs/plug@1.0.6",
       "jsr:@std/assert@^0.221.0": "jsr:@std/assert@0.221.0",
+      "jsr:@std/collections@^1.0.4": "jsr:@std/collections@1.0.4",
       "jsr:@std/encoding@^0.221.0": "jsr:@std/encoding@0.221.0",
       "jsr:@std/fmt@^0.221.0": "jsr:@std/fmt@0.221.0",
+      "jsr:@std/fs": "jsr:@std/fs@0.221.0",
       "jsr:@std/fs@^0.221.0": "jsr:@std/fs@0.221.0",
+      "jsr:@std/path": "jsr:@std/path@0.221.0",
       "jsr:@std/path@^0.221.0": "jsr:@std/path@0.221.0",
+      "jsr:@std/semver": "jsr:@std/semver@1.0.3",
+      "jsr:@std/toml": "jsr:@std/toml@1.0.0",
       "jsr:@std/ulid": "jsr:@std/ulid@0.224.1",
       "jsr:@valibot/valibot": "jsr:@valibot/valibot@0.42.0",
       "jsr:@webview/webview": "jsr:@webview/webview@0.8.0",
@@ -16,6 +22,7 @@
       "npm:effection": "npm:effection@3.0.3",
       "npm:json-schema-to-zod": "npm:json-schema-to-zod@2.4.1",
       "npm:ts-pattern": "npm:ts-pattern@5.0.6",
+      "npm:type-fest": "npm:type-fest@4.25.0",
       "npm:zod": "npm:zod@3.23.8"
     },
     "jsr": {
@@ -30,6 +37,9 @@
       },
       "@std/assert@0.221.0": {
         "integrity": "a5f1aa6e7909dbea271754fd4ab3f4e687aeff4873b4cef9a320af813adb489a"
+      },
+      "@std/collections@1.0.4": {
+        "integrity": "bcc90800e489dc6bacdf68eb5dc746d6d8a033cb4f3311f0f9cf8094de429ce7"
       },
       "@std/encoding@0.221.0": {
         "integrity": "d1dd76ef0dc5d14088411e6dc1dede53bf8308c95d1537df1214c97137208e45"
@@ -48,6 +58,15 @@
         "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095",
         "dependencies": [
           "jsr:@std/assert@^0.221.0"
+        ]
+      },
+      "@std/semver@1.0.3": {
+        "integrity": "7c139c6076a080eeaa4252c78b95ca5302818d7eafab0470d34cafd9930c13c8"
+      },
+      "@std/toml@1.0.0": {
+        "integrity": "c9e37564eedd84084871c66238e00196ec67aa958e09a7f761b3f36273a7a8a5",
+        "dependencies": [
+          "jsr:@std/collections@^1.0.4"
         ]
       },
       "@std/ulid@0.224.1": {
@@ -82,6 +101,10 @@
       },
       "ts-pattern@5.0.6": {
         "integrity": "sha512-Y+jOjihlFriWzcBjncPCf2/am+Hgz7LtsWs77pWg5vQQKLQj07oNrJryo/wK2G0ndNaoVn2ownFMeoeAuReu3Q==",
+        "dependencies": {}
+      },
+      "type-fest@4.25.0": {
+        "integrity": "sha512-bRkIGlXsnGBRBQRAY56UXBm//9qH4bmJfFvq83gSz41N282df+fjy8ofcEgc1sM8geNt5cl6mC2g9Fht1cs8Aw==",
         "dependencies": {}
       },
       "zod@3.23.8": {

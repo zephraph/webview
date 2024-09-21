@@ -1,6 +1,6 @@
-import { WebView } from "../src/lib.ts";
+import { createWebView } from "../src/lib.ts";
 
-const webview = new WebView({
+using webview = await createWebView({
   title: "Simple",
   html: "<h1>Hello, World!</h1>",
 });
