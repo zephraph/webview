@@ -52,12 +52,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            binary_name: deno-webview-linux
           - os: ubuntu-latest
             target: x86_64-pc-windows-msvc
+            binary_name: deno-webview-windows.exe
           - os: macos-latest
             target: x86_64-apple-darwin
+            binary_name: deno-webview-mac
           - os: macos-latest
             target: aarch64-apple-darwin
+            binary_name: deno-webview-mac-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -105,20 +109,24 @@ jobs:
 
       - name: Build (non-Windows, non-aarch64-apple)
         if: matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
-        run: cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+        run: |
+          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
 
       - name: Build (aarch64-apple-darwin)
         if: matrix.target == 'aarch64-apple-darwin'
-        run: SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+        run: |
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
 
       - name: Build (Windows)
         if: matrix.target == 'x86_64-pc-windows-msvc'
-        run: cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+        run: |
+          cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview*
-            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.d
+          path: ${{ matrix.binary_name }}
