@@ -8,8 +8,7 @@ import {
 import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except } from "npm:type-fest";
 import { join } from "jsr:@std/path";
-import { ensureDir } from "jsr:@std/fs";
-import { exists } from "jsr:@std/fs";
+import { ensureDir, exists } from "jsr:@std/fs";
 
 type JSON =
   | string
@@ -141,7 +140,7 @@ function getCacheDir(): string {
   }
 }
 
-export async function createWebView(options: WebViewOptions) {
+export async function createWebView(options: WebViewOptions): Promise<WebView> {
   const binPath = await getWebViewBin(options);
   return new WebView(options, binPath);
 }
@@ -255,7 +254,7 @@ class WebView implements Disposable {
   /**
    * Gets the title of the webview.
    */
-  async getTitle() {
+  async getTitle(): Promise<string> {
     const result = await this.#send({ $type: "getTitle" });
     return returnResult(result, "string");
   }
@@ -267,12 +266,12 @@ class WebView implements Disposable {
   /**
    * Evaluates JavaScript code in the webview.
    */
-  async eval(code: string) {
+  async eval(code: string): Promise<void> {
     const result = await this.#send({ $type: "eval", js: code });
     return returnAck(result);
   }
 
-  async openDevTools() {
+  async openDevTools(): Promise<void> {
     const result = await this.#send({ $type: "openDevTools" });
     return returnAck(result);
   }

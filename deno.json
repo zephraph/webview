@@ -7,5 +7,20 @@
     "gen": "cargo test && deno run -A scripts/generate-zod.ts && deno run -A scripts/sync-versions.ts",
     "build": "deno task gen && cargo build -F transparent",
     "example:simple": "deno run -A examples/simple.ts"
+  },
+  "publish": {
+    "include": ["README.md", "LICENSE", "src/**/*.ts"]
+  },
+  "imports": {
+    "jsr:@std/fs": "jsr:@std/fs@^1.0.3",
+    "jsr:@std/path": "jsr:@std/path@^1.0.6",
+    "jsr:@std/ulid": "jsr:@std/ulid@^1.0.0",
+    "npm:zod": "npm:zod@^3.23.8",
+    "npm:type-fest": "npm:type-fest@^4.26.1"
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-slow-types"]
+    }
   }
 }
