@@ -137,8 +137,6 @@ fn main() -> wry::Result<()> {
     }
     let window = window_builder.build(&event_loop).unwrap();
 
-    eprintln!("transparent: {:?}", webview_options.transparent);
-
     let webview_builder = match webview_options.target {
         WebViewTarget::Url(url) => WebViewBuilder::new(&window).with_url(url),
         WebViewTarget::Html(html) => WebViewBuilder::new(&window).with_html(html),
@@ -171,7 +169,6 @@ fn main() -> wry::Result<()> {
         let mut stdout_lock = stdout.lock();
 
         while let Ok(event) = to_deno.recv() {
-            eprintln!("Sending event: {:?}", event);
             match serde_json::to_string(&event) {
                 Ok(json) => {
                     let mut buffer = json.replace("\0", "").into_bytes();
