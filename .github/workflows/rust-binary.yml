@@ -121,6 +121,4 @@ jobs:
           name: ${{ steps.build_flags.outputs.build_type }}-binary-${{ matrix.target }}
           path: |
             target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview*
-            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deps
-            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/build
-            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/.fingerprint
+            !target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.d
