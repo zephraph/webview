@@ -55,7 +55,7 @@ jobs:
             binary_name: deno-webview-linux
           - os: ubuntu-latest
             target: x86_64-pc-windows-msvc
-            binary_name: deno-webview-windows.exe
+            binary_name: deno-webview-windows
           - os: macos-latest
             target: x86_64-apple-darwin
             binary_name: deno-webview-mac
@@ -107,11 +107,26 @@ jobs:
             echo "build_type=debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build (non-Windows, non-aarch64-apple)
-        if: matrix.target != 'x86_64-pc-windows-msvc' && matrix.target != 'aarch64-apple-darwin'
+      - name: Build Linux
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
+
+          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-devtools
+
+      - name: Build macOS x86_64
+        if: matrix.target == 'x86_64-apple-darwin'
         run: |
           cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
+
+          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-transparent
+
+          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-devtools
 
       - name: Build (aarch64-apple-darwin)
         if: matrix.target == 'aarch64-apple-darwin'
@@ -119,11 +134,20 @@ jobs:
           SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
 
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-transparent
+
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-devtools
+
       - name: Build (Windows)
         if: matrix.target == 'x86_64-pc-windows-msvc'
         run: |
-          cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}
+          cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}.exe
+
+          cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}-devtools.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
