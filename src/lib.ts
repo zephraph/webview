@@ -259,10 +259,6 @@ class WebView implements Disposable {
     return returnResult(result, "string");
   }
 
-  bind(name: string, callback: (...args: any[]) => any) {}
-
-  unbind(name: string) {}
-
   /**
    * Evaluates JavaScript code in the webview.
    */
