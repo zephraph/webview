@@ -221,7 +221,6 @@ fn main() -> wry::Result<()> {
             }
             Event::MainEventsCleared => {
                 if let Ok(req) = rx.try_recv() {
-                    eprintln!("Received event: {:?}", event);
                     match req {
                         Request::Eval { id, js } => {
                             let result = webview.evaluate_script(&js);
