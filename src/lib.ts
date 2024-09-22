@@ -10,6 +10,9 @@ import type { Except } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 
+/* The version of the webview binary to use; should match the cargo package version */
+const BIN_VERSION = "0.1.5";
+
 type JSON =
   | string
   | number
@@ -83,7 +86,7 @@ async function getWebViewBin(options: WebViewOptions) {
     : "";
 
   const cacheDir = getCacheDir();
-  const fileName = `deno-webview${flags}${
+  const fileName = `deno-webview-${BIN_VERSION}${flags}${
     Deno.build.os === "windows" ? ".exe" : ""
   }`;
   const filePath = join(cacheDir, fileName);
@@ -95,7 +98,7 @@ async function getWebViewBin(options: WebViewOptions) {
 
   // If not in cache, download it
   let url =
-    "https://github.com/zephraph/webview/releases/download/v0.1.4/deno-webview";
+    `https://github.com/zephraph/webview/releases/download/v${BIN_VERSION}/deno-webview`;
   switch (Deno.build.os) {
     case "darwin": {
       url += "-mac" + flags;

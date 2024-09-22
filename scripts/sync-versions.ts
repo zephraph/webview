@@ -15,8 +15,8 @@ const libContent = await Deno.readTextFile(libPath);
 
 // Replace the version in the URL
 const updatedContent = libContent.replace(
-  /releases\/download\/v\d+\.\d+\.\d+\/deno-webview/,
-  `releases/download/v${latestVersion}/deno-webview`,
+  /const BIN_VERSION = "[^"]+"/,
+  `const BIN_VERSION = "${latestVersion}"`,
 );
 
 // Write the updated content back to src/lib.ts

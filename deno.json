@@ -6,7 +6,7 @@
     "dev": "deno run --watch main.ts",
     "gen": "cargo test && deno run -A scripts/generate-zod.ts && deno run -A scripts/sync-versions.ts",
     "build": "deno task gen && cargo build -F transparent",
-    "example:simple": "deno run -A examples/simple.ts"
+    "example:simple": "WEBVIEW_BIN=./target/debug/deno-webview deno run -A examples/simple.ts"
   },
   "publish": {
     "include": ["README.md", "LICENSE", "src/**/*.ts"]
