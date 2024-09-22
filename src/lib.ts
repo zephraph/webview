@@ -1,3 +1,16 @@
+/**
+ * A library for creating and interacting with native webview windows.
+ *
+ * @module
+ *
+ * @example
+ * ```ts
+ * import { createWebView } from "jsr:@justbe/webview";
+ *
+ * using webview = await createWebView({ title: "My Webview" });
+ * ```
+ */
+
 import { EventEmitter } from "node:events";
 import {
   WebViewMessage,
@@ -10,8 +23,9 @@ import type { Except } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 
-/* The version of the webview binary to use; should match the cargo package version */
-const BIN_VERSION = "0.1.5";
+// Should match the cargo package version
+/** The version of the webview binary that's expected */
+export const BIN_VERSION = "0.1.5";
 
 type JSON =
   | string
@@ -29,6 +43,12 @@ type WebViewNotification = Extract<
 type ResultType = Extract<WebViewResponse, { $type: "result" }>["result"];
 type ResultKinds = Pick<ResultType, "$type">["$type"];
 
+/**
+ * A helper function for extracting the result from a webview response.
+ *
+ * @param result - The result of the webview request.
+ * @param expectedType - The format of the expected result.
+ */
 function returnResult(
   result: WebViewResponse,
   expectedType: "string",
@@ -143,12 +163,24 @@ function getCacheDir(): string {
   }
 }
 
+/**
+ * Creates a new webview window.
+ *
+ * Will automatically fetch the webview binary if it's not already downloaded
+ */
 export async function createWebView(options: WebViewOptions): Promise<WebView> {
   const binPath = await getWebViewBin(options);
   return new WebView(options, binPath);
 }
 
-class WebView implements Disposable {
+/**
+ * A webview window. It's recommended to use the `createWebView` function
+ * because it provides a means of automatically fetching the webview binary
+ * that's compatible with your OS and architecture.
+ *
+ * Each instance of `WebView` spawns a new process that governs a single webview window.
+ */
+export class WebView implements Disposable {
   #process: Deno.ChildProcess;
   #stdin: WritableStreamDefaultWriter;
   #stdout: ReadableStreamDefaultReader;
@@ -157,8 +189,14 @@ class WebView implements Disposable {
   #externalEvent = new EventEmitter();
   #messageLoop: Promise<void>;
 
-  constructor(options: WebViewOptions, binPath: string) {
-    this.#process = new Deno.Command(binPath, {
+  /**
+   * Creates a new webview window.
+   *
+   * @param options - The options for the webview.
+   * @param webviewBinaryPath - The path to the webview binary.
+   */
+  constructor(options: WebViewOptions, webviewBinaryPath: string) {
+    this.#process = new Deno.Command(webviewBinaryPath, {
       args: [JSON.stringify(options)],
       stdin: "piped",
       stdout: "piped",
@@ -232,6 +270,9 @@ class WebView implements Disposable {
     await this.#messageLoop;
   }
 
+  /**
+   * Listens for events emitted by the webview.
+   */
   on(
     event: WebViewNotification["$type"],
     callback: (event: WebViewNotification) => void,
@@ -239,6 +280,9 @@ class WebView implements Disposable {
     this.#internalEvent.on(event, callback);
   }
 
+  /**
+   * Listens for a single event emitted by the webview.
+   */
   once(
     event: WebViewNotification["$type"],
     callback: (event: WebViewNotification) => void,
@@ -270,11 +314,26 @@ class WebView implements Disposable {
     return returnAck(result);
   }
 
+  /**
+   * Opens the developer tools for the webview.
+   */
   async openDevTools(): Promise<void> {
     const result = await this.#send({ $type: "openDevTools" });
     return returnAck(result);
   }
 
+  /**
+   * Destroys the webview and cleans up resources.
+   *
+   * Alternatively you can use the disposible interface.
+   *
+   * @example
+   * ```ts
+   * // The `using` keyword will automatically call `destroy` on the webview when
+   * // the webview goes out of scope.
+   * using webview = await createWebView({ title: "My Webview" });
+   * ```
+   */
   destroy() {
     this[Symbol.dispose]();
   }
