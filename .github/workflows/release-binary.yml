@@ -45,7 +45,7 @@ jobs:
         if: steps.check_artifacts.outputs.artifacts_found == 'true'
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ steps.get_version.outputs.version }}
+          tag: webview-v${{ steps.get_version.outputs.version }}
           name: Release ${{ steps.get_version.outputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
