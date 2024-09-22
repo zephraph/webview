@@ -39,8 +39,8 @@ jobs:
         with:
           deno-version: v1.x
 
-      - name: Run codegen
-        run: deno task gen
+      - name: Run deno codegen
+        run: deno task gen:deno
 
       - name: Check for changed files
         run: |
