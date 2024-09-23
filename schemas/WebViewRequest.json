@@ -7,6 +7,24 @@
       "type": "object",
       "required": [
         "$type",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "getVersion"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
         "id",
         "js"
       ],

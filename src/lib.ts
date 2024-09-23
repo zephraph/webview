@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.7";
+export const BIN_VERSION = "0.1.8";
 
 type JSON =
   | string
@@ -234,7 +234,12 @@ export class WebView implements Disposable {
     return new Promise((resolve) => {
       // Setup listener before sending the message to avoid race conditions
       this.#internalEvent.once(id, (event) => {
-        resolve(WebViewResponse.parse(event));
+        const result = WebViewResponse.safeParse(event);
+        if (result.success) {
+          resolve(result.data);
+        } else {
+          resolve({ $type: "err", id, message: result.error.message });
+        }
       });
       this.#stdin.write(
         new TextEncoder().encode(
@@ -256,11 +261,16 @@ export class WebView implements Disposable {
       if (NulCharIndex === -1) {
         continue;
       }
-      const result = WebViewMessage.parse(
+      const result = WebViewMessage.safeParse(
         JSON.parse(this.#buffer.slice(0, NulCharIndex)),
       );
       this.#buffer = this.#buffer.slice(NulCharIndex + 1);
-      return result;
+      if (result.success) {
+        return result.data;
+      } else {
+        console.error("Error parsing message", result.error);
+        return result;
+      }
     }
   }
 
@@ -268,11 +278,34 @@ export class WebView implements Disposable {
     while (true) {
       const result = await this.#recv();
       if (!result) return;
+      if ("error" in result) {
+        // TODO: This should be handled more gracefully
+        for (const issue of result.error.issues) {
+          switch (issue.code) {
+            case "invalid_type":
+              console.error(
+                `Invalid type: expected ${issue.expected} but got ${issue.received}`,
+              );
+              break;
+            default:
+              console.error(`Unknown error: ${issue.message}`);
+          }
+        }
+        continue;
+      }
       const { $type, data } = result;
 
       if ($type === "notification") {
         const notification = data;
         this.#externalEvent.emit(notification.$type);
+        if (notification.$type === "started") {
+          const version = notification.version;
+          if (version !== BIN_VERSION) {
+            console.warn(
+              `Expected webview to be version ${BIN_VERSION} but got ${version}. Some features may not work as expected.`,
+            );
+          }
+        }
         if (notification.$type === "closed") {
           return;
         }
@@ -310,6 +343,14 @@ export class WebView implements Disposable {
     callback: (event: WebViewNotification) => void,
   ) {
     this.#externalEvent.once(event, callback);
+  }
+
+  /**
+   * Gets the version of the webview binary.
+   */
+  async getVersion(): Promise<string> {
+    const result = await this.#send({ $type: "getVersion" });
+    return returnResult(result, "string");
   }
 
   /**

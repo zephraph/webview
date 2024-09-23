@@ -47,7 +47,8 @@
         {
           "type": "object",
           "required": [
-            "$type"
+            "$type",
+            "version"
           ],
           "properties": {
             "$type": {
@@ -55,6 +56,9 @@
               "enum": [
                 "started"
               ]
+            },
+            "version": {
+              "type": "string"
             }
           }
         },
