@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.10 (binary 0.1.9) -- 2024-09-23
+
+- Adds an `ipc` flag to enable sending messages from the webview back to the host deno process.
+- Adds an IPC example
+- Updates notifications to pass message bodies through
+
 ## 0.0.9 (binary 0.1.8) -- 2024-09-23
 
 - Adds a `getVersion` method to `Webview` that returns the binary version.

@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "deno-webview"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "schemars",
  "serde",

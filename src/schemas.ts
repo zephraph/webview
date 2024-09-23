@@ -11,6 +11,7 @@ export type WebViewOptions =
     focused?: boolean;
     fullscreen?: boolean;
     incognito?: boolean;
+    ipc?: boolean;
     title: string;
     transparent?: boolean;
   }
@@ -32,6 +33,7 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
     focused: z.boolean().optional(),
     fullscreen: z.boolean().optional(),
     incognito: z.boolean().optional(),
+    ipc: z.boolean().optional(),
     title: z.string(),
     transparent: z.boolean().optional(),
   }),
@@ -144,6 +146,10 @@ export type WebViewMessage =
         version: string;
       }
       | {
+        $type: "ipc";
+        message: string;
+      }
+      | {
         $type: "closed";
       };
   }
@@ -184,6 +190,7 @@ export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
       $type: z.literal("notification"),
       data: z.discriminatedUnion("$type", [
         z.object({ $type: z.literal("started"), version: z.string() }),
+        z.object({ $type: z.literal("ipc"), message: z.string() }),
         z.object({ $type: z.literal("closed") }),
       ]),
     }),

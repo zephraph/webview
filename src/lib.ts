@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.8";
+export const BIN_VERSION = "0.1.9";
 
 type JSON =
   | string
@@ -296,17 +296,17 @@ export class WebView implements Disposable {
       const { $type, data } = result;
 
       if ($type === "notification") {
-        const notification = data;
-        this.#externalEvent.emit(notification.$type);
-        if (notification.$type === "started") {
-          const version = notification.version;
+        const { $type, ...body } = data;
+        this.#externalEvent.emit($type, body);
+        if (data.$type === "started") {
+          const version = data.version;
           if (version !== BIN_VERSION) {
             console.warn(
               `Expected webview to be version ${BIN_VERSION} but got ${version}. Some features may not work as expected.`,
             );
           }
         }
-        if (notification.$type === "closed") {
+        if ($type === "closed") {
           return;
         }
       }
