@@ -21,7 +21,7 @@ jobs:
 
       - name: Get published version
         id: published_version
-        run: echo "version=$(npx jsr show @justbe/webview | head -n 2 | xargs | grep --color=never '' | awk '{print $4}')" >> $GITHUB_OUTPUT
+        run: echo "version=$(npx jsr show @justbe/webview | head -n 2 | npx -q strip-ansi-cli | xargs | awk '{print $4}')" >> $GITHUB_OUTPUT
 
       - name: Publish package
         if: ${{ steps.current_version.outputs.version != steps.published_version.outputs.version }}
@@ -32,7 +32,7 @@ jobs:
       - name: Get latest version
         if: ${{ steps.current_version.outputs.version != steps.published_version.outputs.version }}
         id: latest_version
-        run: echo "version=$(npx jsr show @justbe/webview | head -n 2 | xargs | grep --color=never '' | awk '{print $4}')" >> $GITHUB_OUTPUT
+        run: echo "version=$(npx jsr show @justbe/webview | head -n 2 | npx -q strip-ansi-cli | xargs | awk '{print $4}')" >> $GITHUB_OUTPUT
 
       - name: Tag and push if versions differ
         if: ${{ steps.current_version.outputs.version != steps.published_version.outputs.version && steps.latest_version.outputs.version != steps.published_version.outputs.version }}
