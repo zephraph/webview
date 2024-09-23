@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.8 (binary 0.1.7) -- 2024-09-23
+
+NOTE: The binary version was bumped this release, but it doesn't actually have changes.
+This is just me forcing a new release to be published.
+
+- Fixed the release URL to ensure the download comes from the correct place
+
 ## 0.0.7 (binary 0.1.6) -- 2024-09-23
 
 - Added this changelog
