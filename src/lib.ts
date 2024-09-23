@@ -7,7 +7,16 @@
  * ```ts
  * import { createWebView } from "jsr:@justbe/webview";
  *
- * using webview = await createWebView({ title: "My Webview" });
+ * using webview = await createWebView({
+ *  title: "Example",
+ *  html: "<h1>Hello, World!</h1>",
+ *  devtools: true
+ * });
+ *
+ * webview.on("started", async () => {
+ *  await webview.openDevTools();
+ *  await webview.eval("console.log('This is printed from eval!')");
+ * });
  *
  * await webview.waitUntilClosed();
  * ```
