@@ -1,7 +1,7 @@
 {
   "name": "@justbe/webview",
   "exports": "./src/lib.ts",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "tasks": {
     "dev": "deno run --watch main.ts",
     "gen": "deno task gen:rust && deno task gen:deno",
