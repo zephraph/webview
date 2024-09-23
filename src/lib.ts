@@ -282,7 +282,7 @@ export class WebView implements Disposable {
     event: WebViewNotification["$type"],
     callback: (event: WebViewNotification) => void,
   ) {
-    this.#internalEvent.on(event, callback);
+    this.#externalEvent.on(event, callback);
   }
 
   /**
@@ -292,7 +292,7 @@ export class WebView implements Disposable {
     event: WebViewNotification["$type"],
     callback: (event: WebViewNotification) => void,
   ) {
-    this.#internalEvent.once(event, callback);
+    this.#externalEvent.once(event, callback);
   }
 
   async setTitle(title: string): Promise<void> {
