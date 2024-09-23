@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use tao::window::Fullscreen;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(JsonSchema, Deserialize, Debug)]
 struct WebViewOptions {
     /// Sets the title of the window.
@@ -75,7 +77,7 @@ enum Message {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 enum Notification {
-    Started,
+    Started { version: String },
     Closed,
 }
 
@@ -84,6 +86,7 @@ enum Notification {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 enum Request {
+    GetVersion { id: String },
     Eval { id: String, js: String },
     SetTitle { id: String, title: String },
     GetTitle { id: String },
@@ -217,7 +220,9 @@ fn main() -> wry::Result<()> {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::NewEvents(StartCause::Init) => notify(Notification::Started),
+            Event::NewEvents(StartCause::Init) => notify(Notification::Started {
+                version: VERSION.into(),
+            }),
             Event::UserEvent(event) => {
                 eprintln!("User event: {:?}", event);
             }
@@ -271,6 +276,12 @@ fn main() -> wry::Result<()> {
                             id,
                             result: window.is_visible().into(),
                         }),
+                        Request::GetVersion { id } => {
+                            res(Response::Result {
+                                id,
+                                result: VERSION.to_string().into(),
+                            });
+                        }
                     }
                 }
             }

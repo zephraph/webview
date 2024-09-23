@@ -40,6 +40,10 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
 
 export type WebViewRequest =
   | {
+    $type: "getVersion";
+    id: string;
+  }
+  | {
     $type: "eval";
     id: string;
     js: string;
@@ -69,6 +73,7 @@ export type WebViewRequest =
 export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
   "$type",
   [
+    z.object({ $type: z.literal("getVersion"), id: z.string() }),
     z.object({ $type: z.literal("eval"), id: z.string(), js: z.string() }),
     z.object({
       $type: z.literal("setTitle"),
@@ -136,6 +141,7 @@ export type WebViewMessage =
     data:
       | {
         $type: "started";
+        version: string;
       }
       | {
         $type: "closed";
@@ -177,7 +183,7 @@ export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
     z.object({
       $type: z.literal("notification"),
       data: z.discriminatedUnion("$type", [
-        z.object({ $type: z.literal("started") }),
+        z.object({ $type: z.literal("started"), version: z.string() }),
         z.object({ $type: z.literal("closed") }),
       ]),
     }),
