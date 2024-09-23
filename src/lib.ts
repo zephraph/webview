@@ -64,6 +64,10 @@ type ResultKinds = Pick<ResultType, "$type">["$type"];
  */
 function returnResult(
   result: WebViewResponse,
+  expectedType: "boolean",
+): boolean;
+function returnResult(
+  result: WebViewResponse,
   expectedType: "string",
 ): string;
 function returnResult(
@@ -73,7 +77,7 @@ function returnResult(
 function returnResult(
   result: WebViewResponse,
   expectedType?: ResultKinds,
-): string | JSON {
+): string | JSON | boolean {
   switch (result.$type) {
     case "result": {
       if (expectedType && result.result.$type !== expectedType) {
@@ -85,6 +89,8 @@ function returnResult(
           return res.value;
         case "json":
           return JSON.parse(res.value) as JSON;
+        case "boolean":
+          return res.value;
       }
       break;
     }
@@ -323,6 +329,19 @@ export class WebView implements Disposable {
   async getTitle(): Promise<string> {
     const result = await this.#send({ $type: "getTitle" });
     return returnResult(result, "string");
+  }
+
+  /**
+   * Sets the visibility of the webview window.
+   */
+  async setVisibility(visible: boolean): Promise<void> {
+    const result = await this.#send({ $type: "setVisibility", visible });
+    return returnAck(result);
+  }
+
+  async isVisible(): Promise<boolean> {
+    const result = await this.#send({ $type: "isVisible" });
+    return returnResult(result, "boolean");
   }
 
   /**

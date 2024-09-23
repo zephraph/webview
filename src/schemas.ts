@@ -54,6 +54,15 @@ export type WebViewRequest =
     id: string;
   }
   | {
+    $type: "setVisibility";
+    id: string;
+    visible: boolean;
+  }
+  | {
+    $type: "isVisible";
+    id: string;
+  }
+  | {
     $type: "openDevTools";
     id: string;
   };
@@ -67,6 +76,12 @@ export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
       title: z.string(),
     }),
     z.object({ $type: z.literal("getTitle"), id: z.string() }),
+    z.object({
+      $type: z.literal("setVisibility"),
+      id: z.string(),
+      visible: z.boolean(),
+    }),
+    z.object({ $type: z.literal("isVisible"), id: z.string() }),
     z.object({ $type: z.literal("openDevTools"), id: z.string() }),
   ],
 );
@@ -87,6 +102,10 @@ export type WebViewResponse =
       | {
         $type: "json";
         value: string;
+      }
+      | {
+        $type: "boolean";
+        value: boolean;
       };
   }
   | {
@@ -104,6 +123,7 @@ export const WebViewResponse: z.ZodType<WebViewResponse> = z.discriminatedUnion(
       result: z.discriminatedUnion("$type", [
         z.object({ $type: z.literal("string"), value: z.string() }),
         z.object({ $type: z.literal("json"), value: z.string() }),
+        z.object({ $type: z.literal("boolean"), value: z.boolean() }),
       ]),
     }),
     z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
@@ -139,6 +159,10 @@ export type WebViewMessage =
           | {
             $type: "json";
             value: string;
+          }
+          | {
+            $type: "boolean";
+            value: boolean;
           };
       }
       | {
@@ -167,6 +191,7 @@ export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
           result: z.discriminatedUnion("$type", [
             z.object({ $type: z.literal("string"), value: z.string() }),
             z.object({ $type: z.literal("json"), value: z.string() }),
+            z.object({ $type: z.literal("boolean"), value: z.boolean() }),
           ]),
         }),
         z.object({
