@@ -7,7 +7,16 @@
  * ```ts
  * import { createWebView } from "jsr:@justbe/webview";
  *
- * using webview = await createWebView({ title: "My Webview" });
+ * using webview = await createWebView({
+ *  title: "Example",
+ *  html: "<h1>Hello, World!</h1>",
+ *  devtools: true
+ * });
+ *
+ * webview.on("started", async () => {
+ *  await webview.openDevTools();
+ *  await webview.eval("console.log('This is printed from eval!')");
+ * });
  *
  * await webview.waitUntilClosed();
  * ```
@@ -25,9 +34,11 @@ import type { Except } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 
+export type { WebViewOptions } from "./schemas.ts";
+
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.5";
+export const BIN_VERSION = "0.1.6";
 
 type JSON =
   | string
@@ -53,6 +64,10 @@ type ResultKinds = Pick<ResultType, "$type">["$type"];
  */
 function returnResult(
   result: WebViewResponse,
+  expectedType: "boolean",
+): boolean;
+function returnResult(
+  result: WebViewResponse,
   expectedType: "string",
 ): string;
 function returnResult(
@@ -62,7 +77,7 @@ function returnResult(
 function returnResult(
   result: WebViewResponse,
   expectedType?: ResultKinds,
-): string | JSON {
+): string | JSON | boolean {
   switch (result.$type) {
     case "result": {
       if (expectedType && result.result.$type !== expectedType) {
@@ -74,6 +89,8 @@ function returnResult(
           return res.value;
         case "json":
           return JSON.parse(res.value) as JSON;
+        case "boolean":
+          return res.value;
       }
       break;
     }
@@ -295,6 +312,9 @@ export class WebView implements Disposable {
     this.#externalEvent.once(event, callback);
   }
 
+  /**
+   * Sets the title of the webview window.
+   */
   async setTitle(title: string): Promise<void> {
     const result = await this.#send({
       $type: "setTitle",
@@ -304,11 +324,24 @@ export class WebView implements Disposable {
   }
 
   /**
-   * Gets the title of the webview.
+   * Gets the title of the webview window.
    */
   async getTitle(): Promise<string> {
     const result = await this.#send({ $type: "getTitle" });
     return returnResult(result, "string");
+  }
+
+  /**
+   * Sets the visibility of the webview window.
+   */
+  async setVisibility(visible: boolean): Promise<void> {
+    const result = await this.#send({ $type: "setVisibility", visible });
+    return returnAck(result);
+  }
+
+  async isVisible(): Promise<boolean> {
+    const result = await this.#send({ $type: "isVisible" });
+    return returnResult(result, "boolean");
   }
 
   /**
@@ -343,6 +376,23 @@ export class WebView implements Disposable {
     this[Symbol.dispose]();
   }
 
+  /**
+   * Part of the explicit resource management feature added in TS 5.2
+   *
+   * When a reference to the webview is stored with `using` this method
+   * will be called automatically when the webview goes out of scope.
+   *
+   * @example
+   *
+   * ```ts
+   * {
+   *  using webview = await createWebView({ title: "My Webview" });
+   * } // Webview will be cleaned up here
+   *
+   * ```
+   *
+   * @see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management
+   */
   [Symbol.dispose](): void {
     this.#internalEvent.removeAllListeners();
     this.#stdin.releaseLock();

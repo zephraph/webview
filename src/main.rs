@@ -87,6 +87,8 @@ enum Request {
     Eval { id: String, js: String },
     SetTitle { id: String, title: String },
     GetTitle { id: String },
+    SetVisibility { id: String, visible: bool },
+    IsVisible { id: String },
     OpenDevTools { id: String },
 }
 
@@ -108,11 +110,18 @@ enum Response {
 enum ResultType {
     String(String),
     Json(String),
+    Boolean(bool),
 }
 
 impl From<String> for ResultType {
     fn from(value: String) -> Self {
         ResultType::String(value)
+    }
+}
+
+impl From<bool> for ResultType {
+    fn from(value: bool) -> Self {
+        ResultType::Boolean(value)
     }
 }
 
@@ -254,6 +263,14 @@ fn main() -> wry::Result<()> {
                                 });
                             }
                         }
+                        Request::SetVisibility { id, visible } => {
+                            window.set_visible(visible);
+                            res(Response::Ack { id });
+                        }
+                        Request::IsVisible { id } => res(Response::Result {
+                            id,
+                            result: window.is_visible().into(),
+                        }),
                     }
                 }
             }

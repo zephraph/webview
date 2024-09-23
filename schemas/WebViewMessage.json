@@ -179,6 +179,24 @@
               "type": "string"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "$type",
+            "value"
+          ],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "boolean"
+              ]
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
         }
       ]
     }
