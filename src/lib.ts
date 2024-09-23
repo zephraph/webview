@@ -8,6 +8,8 @@
  * import { createWebView } from "jsr:@justbe/webview";
  *
  * using webview = await createWebView({ title: "My Webview" });
+ *
+ * await webview.waitUntilClosed();
  * ```
  */
 
@@ -94,7 +96,10 @@ const returnAck = (result: WebViewResponse) => {
 };
 
 async function getWebViewBin(options: WebViewOptions) {
-  if (Deno.permissions.querySync({ name: "env" }).state === "granted") {
+  if (
+    Deno.permissions.querySync({ name: "env", variable: "WEBVIEW_BIN" })
+      .state === "granted"
+  ) {
     const binPath = Deno.env.get("WEBVIEW_BIN");
     if (binPath) return binPath;
   }
