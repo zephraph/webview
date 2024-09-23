@@ -48,6 +48,9 @@ struct WebViewOptions {
     /// Sets whether clicking an inactive window also clicks through to the webview. Default is false.
     #[serde(default)]
     accept_first_mouse: bool,
+    /// Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`.
+    #[serde(default)]
+    ipc: bool,
 }
 
 fn default_true() -> bool {
@@ -78,6 +81,7 @@ enum Message {
 #[serde(tag = "$type")]
 enum Notification {
     Started { version: String },
+    Ipc { message: String },
     Closed,
 }
 
@@ -139,6 +143,9 @@ fn main() -> wry::Result<()> {
     };
     use wry::WebViewBuilder;
 
+    let (tx, to_deno) = mpsc::channel::<Message>();
+    let (from_deno, rx) = mpsc::channel::<Request>();
+
     let event_loop = EventLoop::new();
     let mut window_builder = WindowBuilder::new()
         .with_title(webview_options.title)
@@ -149,7 +156,7 @@ fn main() -> wry::Result<()> {
     }
     let window = window_builder.build(&event_loop).unwrap();
 
-    let webview_builder = match webview_options.target {
+    let mut webview_builder = match webview_options.target {
         WebViewTarget::Url(url) => WebViewBuilder::new(&window).with_url(url),
         WebViewTarget::Html(html) => WebViewBuilder::new(&window).with_html(html),
     }
@@ -160,10 +167,17 @@ fn main() -> wry::Result<()> {
     .with_focused(webview_options.focused)
     .with_devtools(webview_options.devtools)
     .with_accept_first_mouse(webview_options.accept_first_mouse);
+    let ipc_tx = tx.clone();
+    if webview_options.ipc {
+        webview_builder = webview_builder.with_ipc_handler(move |message| {
+            ipc_tx
+                .send(Message::Notification(Notification::Ipc {
+                    message: message.body().to_string(),
+                }))
+                .unwrap()
+        })
+    }
     let webview = webview_builder.build()?;
-
-    let (tx, to_deno) = mpsc::channel::<Message>();
-    let (from_deno, rx) = mpsc::channel::<Request>();
 
     let notify_tx = tx.clone();
     let notify = move |notification: Notification| {

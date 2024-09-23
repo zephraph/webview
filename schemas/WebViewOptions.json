@@ -72,6 +72,11 @@
       "default": false,
       "type": "boolean"
     },
+    "ipc": {
+      "description": "Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`.",
+      "default": false,
+      "type": "boolean"
+    },
     "title": {
       "description": "Sets the title of the window.",
       "type": "string"

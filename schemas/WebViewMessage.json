@@ -65,6 +65,24 @@
         {
           "type": "object",
           "required": [
+            "$type",
+            "message"
+          ],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "ipc"
+              ]
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
             "$type"
           ],
           "properties": {

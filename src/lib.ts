@@ -296,17 +296,17 @@ export class WebView implements Disposable {
       const { $type, data } = result;
 
       if ($type === "notification") {
-        const notification = data;
-        this.#externalEvent.emit(notification.$type);
-        if (notification.$type === "started") {
-          const version = notification.version;
+        const { $type, ...body } = data;
+        this.#externalEvent.emit($type, body);
+        if (data.$type === "started") {
+          const version = data.version;
           if (version !== BIN_VERSION) {
             console.warn(
               `Expected webview to be version ${BIN_VERSION} but got ${version}. Some features may not work as expected.`,
             );
           }
         }
-        if (notification.$type === "closed") {
+        if ($type === "closed") {
           return;
         }
       }
