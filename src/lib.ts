@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.6";
+export const BIN_VERSION = "0.1.7";
 
 type JSON =
   | string
@@ -140,7 +140,7 @@ async function getWebViewBin(options: WebViewOptions) {
 
   // If not in cache, download it
   let url =
-    `https://github.com/zephraph/webview/releases/download/v${BIN_VERSION}/deno-webview`;
+    `https://github.com/zephraph/webview/releases/download/webview-v${BIN_VERSION}/deno-webview`;
   switch (Deno.build.os) {
     case "darwin": {
       url += "-mac" + flags;
