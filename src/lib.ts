@@ -295,6 +295,9 @@ export class WebView implements Disposable {
     this.#externalEvent.once(event, callback);
   }
 
+  /**
+   * Sets the title of the webview window.
+   */
   async setTitle(title: string): Promise<void> {
     const result = await this.#send({
       $type: "setTitle",
@@ -304,7 +307,7 @@ export class WebView implements Disposable {
   }
 
   /**
-   * Gets the title of the webview.
+   * Gets the title of the webview window.
    */
   async getTitle(): Promise<string> {
     const result = await this.#send({ $type: "getTitle" });
@@ -343,6 +346,23 @@ export class WebView implements Disposable {
     this[Symbol.dispose]();
   }
 
+  /**
+   * Part of the explicit resource management feature added in TS 5.2
+   *
+   * When a reference to the webview is stored with `using` this method
+   * will be called automatically when the webview goes out of scope.
+   *
+   * @example
+   *
+   * ```ts
+   * {
+   *  using webview = await createWebView({ title: "My Webview" });
+   * } // Webview will be cleaned up here
+   *
+   * ```
+   *
+   * @see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management
+   */
   [Symbol.dispose](): void {
     this.#internalEvent.removeAllListeners();
     this.#stdin.releaseLock();
