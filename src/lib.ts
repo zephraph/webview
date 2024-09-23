@@ -34,6 +34,8 @@ import type { Except } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 
+export type { WebViewOptions } from "./schemas.ts";
+
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
 export const BIN_VERSION = "0.1.5";
