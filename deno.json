@@ -1,12 +1,12 @@
 {
   "name": "@justbe/webview",
   "exports": "./src/lib.ts",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "tasks": {
     "dev": "deno run --watch main.ts",
     "gen": "deno task gen:rust && deno task gen:deno",
     "gen:rust": "cargo test",
-    "gen:deno": "deno run -A scripts/generate-zod.ts && deno run -A scripts/sync-versions.ts",
+    "gen:deno": "deno run -A scripts/generate-schema.ts && deno run -A scripts/sync-versions.ts",
     "build": "deno task gen && cargo build -F transparent",
     "run": "export WEBVIEW_BIN=./target/debug/deno-webview && deno run -E=WEBVIEW_BIN --allow-run=$WEBVIEW_BIN",
     "example:simple": "deno task run examples/simple.ts"
@@ -20,10 +20,5 @@
     "jsr:@std/ulid": "jsr:@std/ulid@^1.0.0",
     "npm:zod": "npm:zod@^3.23.8",
     "npm:type-fest": "npm:type-fest@^4.26.1"
-  },
-  "lint": {
-    "rules": {
-      "exclude": ["no-slow-types"]
-    }
   }
 }
