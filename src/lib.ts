@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.8";
+export const BIN_VERSION = "0.1.9";
 
 type JSON =
   | string
