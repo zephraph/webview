@@ -140,7 +140,7 @@ async function getWebViewBin(options: WebViewOptions) {
 
   // If not in cache, download it
   let url =
-    `https://github.com/zephraph/webview/releases/download/v${BIN_VERSION}/deno-webview`;
+    `https://github.com/zephraph/webview/releases/download/webview-v${BIN_VERSION}/deno-webview`;
   switch (Deno.build.os) {
     case "darwin": {
       url += "-mac" + flags;
