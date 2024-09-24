@@ -380,6 +380,9 @@ export class WebView implements Disposable {
     return returnAck(result);
   }
 
+  /**
+   * Returns true if the webview window is visible.
+   */
   async isVisible(): Promise<boolean> {
     const result = await this.#send({ $type: "isVisible" });
     return returnResult(result, "boolean");

@@ -1,9 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "WebViewOptions",
+  "description": "Options for creating a webview.",
   "type": "object",
   "oneOf": [
     {
+      "description": "Url to load in the webview.",
       "type": "object",
       "required": [
         "url"
@@ -16,6 +18,7 @@
       "additionalProperties": false
     },
     {
+      "description": "Html to load in the webview.",
       "type": "object",
       "required": [
         "html"
@@ -38,7 +41,7 @@
       "type": "boolean"
     },
     "autoplay": {
-      "description": "Sets whether all media can be played without user interaction.",
+      "description": "When true, all media can be played without user interaction. Default is false.",
       "default": false,
       "type": "boolean"
     },
@@ -48,12 +51,12 @@
       "type": "boolean"
     },
     "decorations": {
-      "description": "Sets whether the window should have a border, a title bar, etc.",
+      "description": "When true, the window will have a border, a title bar, etc. Default is true.",
       "default": true,
       "type": "boolean"
     },
     "devtools": {
-      "description": "Enable or disable web inspector which is usually called devtools.\n\nNote this only enables devtools to the webview. To open it, you can call WebView::open_devtools, or right click the page and open it from the context menu.",
+      "description": "Enable or disable webview devtools.\n\nNote this only enables devtools to the webview. To open it, you can call `webview.open_devtools()`, or right click the page and open it from the context menu.",
       "default": false,
       "type": "boolean"
     },
@@ -63,7 +66,7 @@
       "type": "boolean"
     },
     "fullscreen": {
-      "description": "Sets whether the window should be fullscreen.",
+      "description": "When true, the window will be fullscreen. Default is false.",
       "default": false,
       "type": "boolean"
     },
@@ -82,6 +85,7 @@
       "type": "string"
     },
     "transparent": {
+      "description": "Sets whether the window should be transparent.",
       "default": false,
       "type": "boolean"
     }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.11 (binary 0.1.9) -- 2024-09-23
+
+- Adds more doc comments
+
 ## 0.0.10 (binary 0.1.9) -- 2024-09-23
 
 - Adds an `ipc` flag to enable sending messages from the webview back to the host deno process.
