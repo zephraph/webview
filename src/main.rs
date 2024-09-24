@@ -15,20 +15,21 @@ struct WebViewOptions {
     title: String,
     #[serde(flatten)]
     target: WebViewTarget,
-    /// Sets whether the window should be fullscreen.
+    /// When true, the window will be fullscreen. Default is false.
     #[serde(default)]
     fullscreen: bool,
-    /// Sets whether the window should have a border, a title bar, etc.
+    /// When true, the window will have a border, a title bar, etc. Default is true.
     #[serde(default = "default_true")]
     decorations: bool,
+    /// Sets whether the window should be transparent.
     #[serde(default)]
     transparent: bool,
-    /// Sets whether all media can be played without user interaction.
+    /// When true, all media can be played without user interaction. Default is false.
     #[serde(default)]
     autoplay: bool,
-    /// Enable or disable web inspector which is usually called devtools.
+    /// Enable or disable webview devtools.
     ///
-    /// Note this only enables devtools to the webview. To open it, you can call WebView::open_devtools, or right click the page and open it from the context menu.
+    /// Note this only enables devtools to the webview. To open it, you can call `webview.open_devtools()`, or right click the page and open it from the context menu.
     #[serde(default)]
     devtools: bool,
     /// Run the WebView with incognito mode. Note that WebContext will be ingored if incognito is enabled.
@@ -60,7 +61,9 @@ fn default_true() -> bool {
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 enum WebViewTarget {
+    /// Url to load in the webview.
     Url(String),
+    /// Html to load in the webview.
     Html(String),
 }
 

@@ -25,7 +25,12 @@ type NodeIR =
   | { type: "union"; members: NodeIR[] }
   | {
     type: "object";
-    properties: { key: string; required: boolean; value: NodeIR }[];
+    properties: {
+      key: string;
+      required: boolean;
+      description?: string;
+      value: NodeIR;
+    }[];
   }
   | { type: "boolean"; optional?: boolean }
   | { type: "string"; optional?: boolean }
@@ -85,6 +90,7 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
                   ) => ({
                     key,
                     required: node.required?.includes(key) ?? false,
+                    description: (value as JSONSchema).description,
                     value: nodeToIR(value as JSONSchema),
                   })),
                 },
@@ -141,7 +147,18 @@ function generateTypes(ir: DocIR) {
       .with({ type: "literal" }, (node) => w(`"${node.value}"`))
       .with({ type: "object" }, (node) => {
         wn("{");
-        for (const { key, required, value } of node.properties) {
+        for (const { key, required, description, value } of node.properties) {
+          if (description) {
+            if (description.includes("\n")) {
+              wn(`/**`);
+              for (const line of description.split("\n")) {
+                wn(` * ${line}`);
+              }
+              wn(` */`);
+            } else {
+              wn(`/** ${description} */`);
+            }
+          }
           w(key, required ? ": " : "? : ");
           generateNode(value);
           wn(",");

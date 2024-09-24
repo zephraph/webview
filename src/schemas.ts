@@ -3,15 +3,37 @@ import { z } from "npm:zod";
 
 export type WebViewOptions =
   & {
+    /** Sets whether clicking an inactive window also clicks through to the webview. Default is false. */
     accept_first_mouse?: boolean;
+    /** Sets whether all media can be played without user interaction. */
     autoplay?: boolean;
+    /**
+     * Enables clipboard access for the page rendered on Linux and Windows.
+     *
+     * macOS doesn’t provide such method and is always enabled by default. But your app will still need to add menu item accelerators to use the clipboard shortcuts.
+     */
     clipboard?: boolean;
+    /** Sets whether the window should have a border, a title bar, etc. */
     decorations?: boolean;
+    /**
+     * Enable or disable web inspector which is usually called devtools.
+     *
+     * Note this only enables devtools to the webview. To open it, you can call WebView::open_devtools, or right click the page and open it from the context menu.
+     */
     devtools?: boolean;
+    /** Sets whether the webview should be focused when created. Default is false. */
     focused?: boolean;
+    /** Sets whether the window should be fullscreen. */
     fullscreen?: boolean;
+    /**
+     * Run the WebView with incognito mode. Note that WebContext will be ingored if incognito is enabled.
+     *
+     * Platform-specific: - Windows: Requires WebView2 Runtime version 101.0.1210.39 or higher, does nothing on older versions, see https://learn.microsoft.com/en-us/microsoft-edge/webview2/release-notes/archive?tabs=dotnetcsharp#10121039
+     */
     incognito?: boolean;
+    /** Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`. */
     ipc?: boolean;
+    /** Sets the title of the window. */
     title: string;
     transparent?: boolean;
   }
