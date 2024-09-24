@@ -2,6 +2,9 @@
 
 A light, cross-platform library for building web-based desktop apps.
 
+> [!NOTE]  
+> This is alpha level software that's rapidly changing. Things might break. Please let me know if you notice anything missing or not working.
+
 ## Example
 
 ```typescript
