@@ -13,6 +13,7 @@ const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
 interface DocIR {
   type: "doc";
   title: string;
+  description?: string;
   root: NodeIR;
 }
 type NodeIR =
@@ -126,6 +127,7 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
   return {
     type: "doc",
     title: schema.title!,
+    description: schema.description,
     root: nodeToIR(schema),
   };
 }
@@ -137,6 +139,9 @@ function generateTypes(ir: DocIR) {
   };
   const wn = (...t: (string | false | undefined | null | 0)[]) => w(...t, "\n");
 
+  wn("/**");
+  wn(` * ${ir.description}`);
+  wn(" */");
   wn("export type", ir.title, " = ");
   generateNode(ir.root);
 

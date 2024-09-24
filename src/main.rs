@@ -9,6 +9,7 @@ use tao::window::Fullscreen;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Options for creating a webview.
 #[derive(JsonSchema, Deserialize, Debug)]
 struct WebViewOptions {
     /// Sets the title of the window.
