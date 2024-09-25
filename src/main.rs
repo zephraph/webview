@@ -12,6 +12,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Options for creating a webview.
 #[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct WebViewOptions {
     /// Sets the title of the window.
     title: String,

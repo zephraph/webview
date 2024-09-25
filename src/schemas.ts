@@ -7,7 +7,7 @@ import { z } from "npm:zod";
 export type WebViewOptions =
   & {
     /** Sets whether clicking an inactive window also clicks through to the webview. Default is false. */
-    accept_first_mouse?: boolean;
+    acceptFirstMouse?: boolean;
     /** When true, all media can be played without user interaction. Default is false. */
     autoplay?: boolean;
     /**
@@ -51,7 +51,7 @@ export type WebViewOptions =
   );
 export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
   z.object({
-    accept_first_mouse: z.boolean().optional(),
+    acceptFirstMouse: z.boolean().optional(),
     autoplay: z.boolean().optional(),
     clipboard: z.boolean().optional(),
     decorations: z.boolean().optional(),

@@ -35,7 +35,7 @@
     "title"
   ],
   "properties": {
-    "accept_first_mouse": {
+    "acceptFirstMouse": {
       "description": "Sets whether clicking an inactive window also clicks through to the webview. Default is false.",
       "default": false,
       "type": "boolean"
