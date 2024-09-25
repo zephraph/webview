@@ -27,7 +27,7 @@ const app = await esbuild.transform(tldrawApp, {
   sourcemap: false,
 });
 
-const webview = await createWebView({
+using webview = await createWebView({
   title: "TLDraw",
   html: `
     <!DOCTYPE html>

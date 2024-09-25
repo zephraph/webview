@@ -3,6 +3,7 @@ import { createWebView } from "../src/lib.ts";
 using webview = await createWebView({
   title: "Simple",
   html: "<h1>Hello, World!</h1>",
+  devtools: true,
 });
 
 webview.on("started", async () => {
