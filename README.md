@@ -30,6 +30,8 @@ You can run this yourself with
 deno run https://raw.githubusercontent.com/zephraph/webview/refs/heads/main/examples/simple.ts
 ```
 
+Checkout the [examples directory](https://github.com/zephraph/webview/tree/main/examples) for more.
+
 ## Permissions
 
 When executing this package, it checks to see if you have the required binary for interfacing with the OS's webview. If it doesn't exist, it downloads it to a cache directory and executes it. This yields a few different permission code paths to be aware of.
