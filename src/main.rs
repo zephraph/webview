@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use tao::window::Fullscreen;
 
+/// The version of the webview binary.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Options for creating a webview.
