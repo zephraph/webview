@@ -5,10 +5,26 @@ use std::sync::mpsc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
 
 /// The version of the webview binary.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+enum WindowSizeStates {
+    Maximized,
+    Fullscreen,
+}
+
+#[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(untagged)]
+enum WindowSize {
+    States(WindowSizeStates),
+    Size { width: f64, height: f64 },
+}
 
 /// Options for creating a webview.
 #[derive(JsonSchema, Deserialize, Debug)]
@@ -18,9 +34,9 @@ struct WebViewOptions {
     title: String,
     #[serde(flatten)]
     target: WebViewTarget,
-    /// When true, the window will be fullscreen. Default is false.
+    /// The size of the window.
     #[serde(default)]
-    fullscreen: bool,
+    size: Option<WindowSize>,
     /// When true, the window will have a border, a title bar, etc. Default is true.
     #[serde(default = "default_true")]
     decorations: bool,
@@ -157,8 +173,18 @@ fn main() -> wry::Result<()> {
         .with_title(webview_options.title)
         .with_transparent(webview_options.transparent)
         .with_decorations(webview_options.decorations);
-    if webview_options.fullscreen {
-        window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+    match webview_options.size {
+        Some(WindowSize::States(WindowSizeStates::Maximized)) => {
+            window_builder = window_builder.with_maximized(true)
+        }
+        Some(WindowSize::States(WindowSizeStates::Fullscreen)) => {
+            window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)))
+        }
+        Some(WindowSize::Size { width, height }) => {
+            window_builder =
+                window_builder.with_inner_size(Size::Logical(LogicalSize::new(width, height)))
+        }
+        None => (),
     }
     let window = window_builder.build(&event_loop).unwrap();
 

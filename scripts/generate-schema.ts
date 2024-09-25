@@ -36,6 +36,8 @@ type NodeIR =
   | { type: "boolean"; optional?: boolean }
   | { type: "string"; optional?: boolean }
   | { type: "literal"; value: string }
+  | { type: "int"; minimum?: number; maximum?: number }
+  | { type: "float"; minimum?: number; maximum?: number }
   | { type: "unknown" };
 
 const isDescriminatedUnion = (def: JSONSchemaDefinition[] | undefined) => {
@@ -51,12 +53,36 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
         (node) =>
           ({ type: "boolean" as const, optional: !!node.default }) as const,
       )
+      .with({ type: "integer" }, (node) => ({
+        type: "int" as const,
+        minimum: node.minimum,
+        maximum: node.maximum,
+      }))
+      .with({ type: "number", format: "double" }, (node) => ({
+        type: "float" as const,
+        minimum: node.minimum,
+        maximum: node.maximum,
+      }))
       .with(
         { type: "string" },
-        (node) =>
-          node.enum
-            ? ({ type: "literal" as const, value: node.enum[0] as string })
-            : ({ type: "string" as const, optional: !!node.default }),
+        (node) => {
+          if (node.enum) {
+            if (node.enum.length === 1) {
+              return {
+                type: "literal" as const,
+                value: node.enum[0] as string,
+              };
+            }
+            return {
+              type: "union" as const,
+              members: node.enum.map((v) => ({
+                type: "literal" as const,
+                value: v as string,
+              })),
+            };
+          }
+          return ({ type: "string" as const, optional: !!node.default });
+        },
       )
       .with(
         { oneOf: P.when(isDescriminatedUnion) },
@@ -76,7 +102,7 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
       .with(
         { oneOf: P.array() },
         (node) => {
-          const intersection = {
+          const union = {
             type: "union" as const,
             members: node.oneOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [],
           };
@@ -95,18 +121,26 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
                     value: nodeToIR(value as JSONSchema),
                   })),
                 },
-                intersection,
+                union,
               ],
             });
           }
-          return intersection;
+          return union;
         },
       )
       .with(
         { anyOf: P.array() },
         () => ({
           type: "union" as const,
-          members: (node.anyOf?.map((v) => nodeToIR(v as JSONSchema)) ?? []),
+          members: (node.anyOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [])
+            .filter((v) => v.type !== "unknown")
+            // flatten nested unions
+            .reduce((union, member) => {
+              if (member.type === "union") {
+                return union.concat(member.members);
+              }
+              return union.concat(member);
+            }, [] as NodeIR[]),
         }),
       )
       .with(
@@ -147,6 +181,8 @@ function generateTypes(ir: DocIR) {
 
   function generateNode(node: NodeIR) {
     match(node)
+      .with({ type: "int" }, () => w("number"))
+      .with({ type: "float" }, () => w("number"))
       .with({ type: "boolean" }, () => w("boolean"))
       .with({ type: "string" }, () => w("string"))
       .with({ type: "literal" }, (node) => w(`"${node.value}"`))
@@ -205,6 +241,24 @@ function generateZodSchema(ir: DocIR) {
 
   function generateNode(node: NodeIR) {
     match(node)
+      .with({ type: "int" }, (node) => {
+        w("z.number().int()");
+        if (typeof node.minimum === "number") {
+          w(`.min(${node.minimum})`);
+        }
+        if (typeof node.maximum === "number") {
+          w(`.max(${node.maximum})`);
+        }
+      })
+      .with({ type: "float" }, (node) => {
+        w("z.number()");
+        if (typeof node.minimum === "number") {
+          w(`.min(${node.minimum})`);
+        }
+        if (typeof node.maximum === "number") {
+          w(`.max(${node.maximum})`);
+        }
+      })
       .with(
         { type: "boolean" },
         (node) => w("z.boolean()", node.optional && ".optional()"),

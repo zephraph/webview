@@ -26,8 +26,6 @@ export type WebViewOptions =
     devtools?: boolean;
     /** Sets whether the webview should be focused when created. Default is false. */
     focused?: boolean;
-    /** When true, the window will be fullscreen. Default is false. */
-    fullscreen?: boolean;
     /**
      * Run the WebView with incognito mode. Note that WebContext will be ingored if incognito is enabled.
      *
@@ -36,6 +34,11 @@ export type WebViewOptions =
     incognito?: boolean;
     /** Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`. */
     ipc?: boolean;
+    /** The size of the window. */
+    size?: "maximized" | "fullscreen" | {
+      height: number;
+      width: number;
+    };
     /** Sets the title of the window. */
     title: string;
     /** Sets whether the window should be transparent. */
@@ -57,9 +60,14 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
     decorations: z.boolean().optional(),
     devtools: z.boolean().optional(),
     focused: z.boolean().optional(),
-    fullscreen: z.boolean().optional(),
     incognito: z.boolean().optional(),
     ipc: z.boolean().optional(),
+    size: z.union([
+      z.literal("maximized"),
+      z.literal("fullscreen"),
+      z.object({ height: z.number(), width: z.number() }),
+    ])
+      .optional(),
     title: z.string(),
     transparent: z.boolean().optional(),
   }),
