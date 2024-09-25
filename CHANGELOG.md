@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.12 (binary 0.1.10) -- 2024-09-25
+
+BREAKING CHANGES
+
+- `WebViewOptions` `accept_first_mouse` is now `acceptFirstMouse`
+- `WebViewOptions` `fullscreen` was removed in favor of `size`
+
+Additions
+
+- The webview size can be altered by providing `WebViewOptions` `size` as either `"maximized"`, `"fullscreen"`, or `{ width: number, height: number }`
+
+Misc
+
+- Tao updated to v0.30.2
+
 ## 0.0.11 (binary 0.1.9) -- 2024-09-23
 
 - Adds more doc comments
