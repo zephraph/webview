@@ -5,13 +5,13 @@
   "tasks": {
     "dev": "deno run --watch main.ts",
     "gen": "deno task gen:rust && deno task gen:deno",
-    "gen:rust": "cargo test",
+    "gen:rust": "cargo build && cargo test",
     "gen:deno": "deno run -A scripts/generate-schema.ts && deno run -A scripts/sync-versions.ts",
     "build": "deno task gen && cargo build -F transparent -F devtools",
-    "run": "export WEBVIEW_BIN=./target/debug/deno-webview && deno run -E -R --allow-run",
-    "example:simple": "deno task run examples/simple.ts",
-    "example:ipc": "deno task run examples/ipc.ts",
-    "example:tldraw": "deno task run examples/tldraw.ts"
+    "example": "deno run -A scripts/example.ts",
+    "example:simple": "deno task example simple",
+    "example:ipc": "deno task example ipc",
+    "example:tldraw": "deno task example tldraw"
   },
   "publish": {
     "include": ["README.md", "LICENSE", "src/**/*.ts"]
