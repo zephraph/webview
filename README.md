@@ -1,6 +1,6 @@
 # @justbe/webview
 
-A light, cross-platform library for building web-based desktop apps.
+A light, cross-platform library for building web-based desktop apps with [Deno](https://deno.com/).
 
 > [!NOTE]  
 > This is alpha level software that's rapidly changing. Things might break. Please let me know if you notice anything missing or not working.
@@ -22,6 +22,12 @@ webview.on("started", async () => {
 });
 
 await webview.waitUntilClosed();
+```
+
+You can run this yourself with
+
+```sh
+deno run https://raw.githubusercontent.com/zephraph/webview/refs/heads/main/examples/simple.ts
 ```
 
 ## Permissions
