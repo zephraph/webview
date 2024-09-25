@@ -55,11 +55,6 @@ const webview = await createWebView({
       </body>
     </html>
   `,
-  devtools: true,
-});
-
-webview.on("started", () => {
-  webview.openDevTools();
 });
 
 await webview.waitUntilClosed();
