@@ -1,5 +1,5 @@
 import { createWebView } from "../src/lib.ts";
-import * as esbuild from "npm:esbuild";
+import * as esbuild from "https://deno.land/x/esbuild@v0.24.0/wasm.js";
 
 const tldrawApp = `
 import { Tldraw } from "tldraw";
