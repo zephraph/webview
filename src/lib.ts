@@ -370,12 +370,16 @@ export class WebView implements Disposable {
    */
   async getSize(
     includeDecorations?: boolean,
-  ): Promise<{ width: number; height: number }> {
+  ): Promise<{ width: number; height: number; scaleFactor: number }> {
     const result = await this.#send({
       $type: "getSize",
       include_decorations: includeDecorations,
     });
-    return returnResult(result, "size");
+    const { width, height, scale_factor: scaleFactor } = returnResult(
+      result,
+      "size",
+    );
+    return { width, height, scaleFactor };
   }
 
   /**
