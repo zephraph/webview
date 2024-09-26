@@ -7,7 +7,6 @@ using webview = await createWebView({
   ipc: true,
 });
 
-// @ts-expect-error event emitter types still need to be corrected
 webview.on("ipc", ({ message }) => {
   console.log(message);
 });
