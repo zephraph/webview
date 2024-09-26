@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.13 (binary 0.1.11) -- 2024-09-26
+
+- added `webview.loadHtml(...)`
+
 ## 0.0.12 (binary 0.1.10) -- 2024-09-26
 
 BREAKING CHANGES
