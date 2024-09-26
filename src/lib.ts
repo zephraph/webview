@@ -125,7 +125,7 @@ async function getWebViewBin(options: WebViewOptions) {
     `https://github.com/zephraph/webview/releases/download/webview-v${BIN_VERSION}/deno-webview`;
   switch (Deno.build.os) {
     case "darwin": {
-      url += "-mac" + flags;
+      url += "-mac" + (Deno.build.arch === "aarch64" ? "-arm64" : "") + flags;
       break;
     }
     case "linux": {
