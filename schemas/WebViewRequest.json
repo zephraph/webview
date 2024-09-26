@@ -259,6 +259,28 @@
           ]
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "html",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "loadHtml"
+          ]
+        },
+        "html": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
     }
   ],
   "definitions": {

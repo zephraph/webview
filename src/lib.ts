@@ -464,6 +464,14 @@ export class WebView implements Disposable {
   }
 
   /**
+   * Reloads the webview with the provided html.
+   */
+  async loadHtml(html: string): Promise<void> {
+    const result = await this.#send({ $type: "loadHtml", html });
+    return returnAck(result);
+  }
+
+  /**
    * Destroys the webview and cleans up resources.
    *
    * Alternatively you can use the disposible interface.

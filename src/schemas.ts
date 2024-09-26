@@ -136,6 +136,11 @@ export type WebViewRequest =
     $type: "minimize";
     id: string;
     minimized?: boolean;
+  }
+  | {
+    $type: "loadHtml";
+    html: string;
+    id: string;
   };
 export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
   "$type",
@@ -179,6 +184,11 @@ export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
       $type: z.literal("minimize"),
       id: z.string(),
       minimized: z.boolean().optional(),
+    }),
+    z.object({
+      $type: z.literal("loadHtml"),
+      html: z.string(),
+      id: z.string(),
     }),
   ],
 );
