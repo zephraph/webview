@@ -164,6 +164,10 @@ enum Request {
         id: String,
         minimized: Option<bool>,
     },
+    LoadHtml {
+        id: String,
+        html: String,
+    },
 }
 
 /// Responses from the webview to the client.
@@ -424,6 +428,10 @@ fn main() -> wry::Result<()> {
                             let minimized = minimized.unwrap_or(!window.is_minimized());
                             eprintln!("Minimize: {:?}", minimized);
                             window.set_minimized(minimized);
+                            res(Response::Ack { id });
+                        }
+                        Request::LoadHtml { id, html } => {
+                            webview.load_html(&html).unwrap();
                             res(Response::Ack { id });
                         }
                     }

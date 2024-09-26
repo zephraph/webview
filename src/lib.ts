@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.10";
+export const BIN_VERSION = "0.1.11";
 
 type JSON =
   | string
@@ -460,6 +460,14 @@ export class WebView implements Disposable {
    */
   async openDevTools(): Promise<void> {
     const result = await this.#send({ $type: "openDevTools" });
+    return returnAck(result);
+  }
+
+  /**
+   * Reloads the webview with the provided html.
+   */
+  async loadHtml(html: string): Promise<void> {
+    const result = await this.#send({ $type: "loadHtml", html });
     return returnAck(result);
   }
 
