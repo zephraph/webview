@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.9";
+export const BIN_VERSION = "0.1.10";
 
 type JSON =
   | string
@@ -53,54 +53,36 @@ type WebViewNotification = Extract<
   { $type: "notification" }
 >["data"];
 
-type ResultType = Extract<WebViewResponse, { $type: "result" }>["result"];
-type ResultKinds = Pick<ResultType, "$type">["$type"];
+type ResultType = Extract<WebViewResponse, { $type: "result" }>;
 
 /**
  * A helper function for extracting the result from a webview response.
+ * Throws if the response includes unexpected results.
  *
  * @param result - The result of the webview request.
  * @param expectedType - The format of the expected result.
  */
-function returnResult(
-  result: WebViewResponse,
-  expectedType: "boolean",
-): boolean;
-function returnResult(
-  result: WebViewResponse,
-  expectedType: "string",
-): string;
-function returnResult(
-  result: WebViewResponse,
-  expectedType: "json",
-): JSON;
-function returnResult(
-  result: WebViewResponse,
-  expectedType?: ResultKinds,
-): string | JSON | boolean {
-  switch (result.$type) {
-    case "result": {
-      if (expectedType && result.result.$type !== expectedType) {
-        throw new Error(`unexpected result type: ${result.result.$type}`);
-      }
-      const res = result.result;
-      switch (res.$type) {
-        case "string":
-          return res.value;
-        case "json":
-          return JSON.parse(res.value) as JSON;
-        case "boolean":
-          return res.value;
-      }
-      break;
+function returnResult<
+  Response extends WebViewResponse,
+  E extends ResultType["result"]["$type"],
+>(
+  result: Response,
+  expectedType: E,
+): Extract<ResultType["result"], { $type: E }>["value"] {
+  if (result.$type === "result") {
+    if (result.result.$type === expectedType) {
+      // @ts-expect-error TS doesn't correctly narrow this type, but it's correct
+      return result.result.value;
     }
-    case "err":
-      throw new Error(result.message);
-    default:
-      throw new Error(`unexpected response: ${result.$type}`);
+    throw new Error(`unexpected result type: ${result.result.$type}`);
   }
+  throw new Error(`unexpected response: ${result.$type}`);
 }
 
+/**
+ * A helper function for acknowledging a webview response.
+ * Throws if the response includes unexpected results.
+ */
 const returnAck = (result: WebViewResponse) => {
   switch (result.$type) {
     case "ack":
@@ -367,6 +349,67 @@ export class WebView implements Disposable {
   async getVersion(): Promise<string> {
     const result = await this.#send({ $type: "getVersion" });
     return returnResult(result, "string");
+  }
+
+  /**
+   * Sets the size of the webview window.
+   *
+   * Note: this is the logical size of the window, not the physical size.
+   * @see https://docs.rs/dpi/0.1.1/x86_64-unknown-linux-gnu/dpi/index.html#position-and-size-types
+   */
+  async setSize(size: { width: number; height: number }): Promise<void> {
+    const result = await this.#send({ $type: "setSize", size });
+    return returnAck(result);
+  }
+
+  /**
+   * Gets the size of the webview window.
+   *
+   * Note: this is the logical size of the window, not the physical size.
+   * @see https://docs.rs/dpi/0.1.1/x86_64-unknown-linux-gnu/dpi/index.html#position-and-size-types
+   */
+  async getSize(
+    includeDecorations?: boolean,
+  ): Promise<{ width: number; height: number; scaleFactor: number }> {
+    const result = await this.#send({
+      $type: "getSize",
+      include_decorations: includeDecorations,
+    });
+    const { width, height, scale_factor: scaleFactor } = returnResult(
+      result,
+      "size",
+    );
+    return { width, height, scaleFactor };
+  }
+
+  /**
+   * Enters or exits fullscreen mode for the webview.
+   *
+   * @param fullscreen - If true, the webview will enter fullscreen mode. If false, the webview will exit fullscreen mode. If not specified, the webview will toggle fullscreen mode.
+   */
+  async fullscreen(fullscreen?: boolean): Promise<void> {
+    const result = await this.#send({ $type: "fullscreen", fullscreen });
+    return returnAck(result);
+  }
+
+  /**
+   * Maximizes or unmaximizes the webview window.
+   *
+   * @param maximized - If true, the webview will be maximized. If false, the webview will be unmaximized. If not specified, the webview will toggle maximized state.
+   */
+  async maximize(maximized?: boolean): Promise<void> {
+    const result = await this.#send({ $type: "maximize", maximized });
+    return returnAck(result);
+  }
+
+  /**
+   * Minimizes or unminimizes the webview window.
+   *
+   * @param minimized - If true, the webview will be minimized. If false, the webview will be unminimized. If not specified, the webview will toggle minimized state.
+   */
+  async minimize(minimized?: boolean): Promise<void> {
+    const result = await this.#send({ $type: "minimize", minimized });
+    return returnAck(result);
   }
 
   /**

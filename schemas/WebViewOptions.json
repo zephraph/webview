@@ -35,7 +35,7 @@
     "title"
   ],
   "properties": {
-    "accept_first_mouse": {
+    "acceptFirstMouse": {
       "description": "Sets whether clicking an inactive window also clicks through to the webview. Default is false.",
       "default": false,
       "type": "boolean"
@@ -65,11 +65,6 @@
       "default": false,
       "type": "boolean"
     },
-    "fullscreen": {
-      "description": "When true, the window will be fullscreen. Default is false.",
-      "default": false,
-      "type": "boolean"
-    },
     "incognito": {
       "description": "Run the WebView with incognito mode. Note that WebContext will be ingored if incognito is enabled.\n\nPlatform-specific: - Windows: Requires WebView2 Runtime version 101.0.1210.39 or higher, does nothing on older versions, see https://learn.microsoft.com/en-us/microsoft-edge/webview2/release-notes/archive?tabs=dotnetcsharp#10121039",
       "default": false,
@@ -80,6 +75,17 @@
       "default": false,
       "type": "boolean"
     },
+    "size": {
+      "description": "The size of the window.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/WindowSize"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "title": {
       "description": "Sets the title of the window.",
       "type": "string"
@@ -88,6 +94,39 @@
       "description": "Sets whether the window should be transparent.",
       "default": false,
       "type": "boolean"
+    }
+  },
+  "definitions": {
+    "WindowSize": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/WindowSizeStates"
+        },
+        {
+          "type": "object",
+          "required": [
+            "height",
+            "width"
+          ],
+          "properties": {
+            "height": {
+              "type": "number",
+              "format": "double"
+            },
+            "width": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      ]
+    },
+    "WindowSizeStates": {
+      "type": "string",
+      "enum": [
+        "maximized",
+        "fullscreen"
+      ]
     }
   }
 }

@@ -5,21 +5,45 @@ use std::sync::mpsc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
 
 /// The version of the webview binary.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SimpleSize {
+    width: f64,
+    height: f64,
+}
+
+#[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+enum WindowSizeStates {
+    Maximized,
+    Fullscreen,
+}
+
+#[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(untagged)]
+enum WindowSize {
+    States(WindowSizeStates),
+    Size { width: f64, height: f64 },
+}
+
 /// Options for creating a webview.
 #[derive(JsonSchema, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct WebViewOptions {
     /// Sets the title of the window.
     title: String,
     #[serde(flatten)]
     target: WebViewTarget,
-    /// When true, the window will be fullscreen. Default is false.
+    /// The size of the window.
     #[serde(default)]
-    fullscreen: bool,
+    size: Option<WindowSize>,
     /// When true, the window will have a border, a title bar, etc. Default is true.
     #[serde(default = "default_true")]
     decorations: bool,
@@ -95,13 +119,51 @@ enum Notification {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 enum Request {
-    GetVersion { id: String },
-    Eval { id: String, js: String },
-    SetTitle { id: String, title: String },
-    GetTitle { id: String },
-    SetVisibility { id: String, visible: bool },
-    IsVisible { id: String },
-    OpenDevTools { id: String },
+    GetVersion {
+        id: String,
+    },
+    Eval {
+        id: String,
+        js: String,
+    },
+    SetTitle {
+        id: String,
+        title: String,
+    },
+    GetTitle {
+        id: String,
+    },
+    SetVisibility {
+        id: String,
+        visible: bool,
+    },
+    IsVisible {
+        id: String,
+    },
+    OpenDevTools {
+        id: String,
+    },
+    GetSize {
+        id: String,
+        #[serde(default)]
+        include_decorations: Option<bool>,
+    },
+    SetSize {
+        id: String,
+        size: SimpleSize,
+    },
+    Fullscreen {
+        id: String,
+        fullscreen: Option<bool>,
+    },
+    Maximize {
+        id: String,
+        maximized: Option<bool>,
+    },
+    Minimize {
+        id: String,
+        minimized: Option<bool>,
+    },
 }
 
 /// Responses from the webview to the client.
@@ -121,8 +183,14 @@ enum Response {
 #[allow(dead_code)]
 enum ResultType {
     String(String),
-    Json(String),
     Boolean(bool),
+    Float(f64),
+    Size {
+        width: f64,
+        height: f64,
+        /// The ratio between physical and logical sizes.
+        scale_factor: f64,
+    },
 }
 
 impl From<String> for ResultType {
@@ -156,8 +224,18 @@ fn main() -> wry::Result<()> {
         .with_title(webview_options.title)
         .with_transparent(webview_options.transparent)
         .with_decorations(webview_options.decorations);
-    if webview_options.fullscreen {
-        window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+    match webview_options.size {
+        Some(WindowSize::States(WindowSizeStates::Maximized)) => {
+            window_builder = window_builder.with_maximized(true)
+        }
+        Some(WindowSize::States(WindowSizeStates::Fullscreen)) => {
+            window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)))
+        }
+        Some(WindowSize::Size { width, height }) => {
+            window_builder =
+                window_builder.with_inner_size(Size::Logical(LogicalSize::new(width, height)))
+        }
+        None => (),
     }
     let window = window_builder.build(&event_loop).unwrap();
 
@@ -300,6 +378,53 @@ fn main() -> wry::Result<()> {
                                 id,
                                 result: VERSION.to_string().into(),
                             });
+                        }
+                        Request::GetSize {
+                            id,
+                            include_decorations,
+                        } => {
+                            let size = if include_decorations.unwrap_or(false) {
+                                window.outer_size().to_logical(window.scale_factor())
+                            } else {
+                                window.inner_size().to_logical(window.scale_factor())
+                            };
+                            res(Response::Result {
+                                id,
+                                result: ResultType::Size {
+                                    width: size.width,
+                                    height: size.height,
+                                    scale_factor: window.scale_factor(),
+                                },
+                            });
+                        }
+                        Request::SetSize { id, size } => {
+                            window.set_inner_size(Size::Logical(LogicalSize::new(
+                                size.width,
+                                size.height,
+                            )));
+                            res(Response::Ack { id });
+                        }
+                        Request::Fullscreen { id, fullscreen } => {
+                            let fullscreen = fullscreen.unwrap_or(!window.fullscreen().is_some());
+                            eprintln!("Fullscreen: {:?}", fullscreen);
+                            if fullscreen {
+                                window.set_fullscreen(Some(Fullscreen::Borderless(None)));
+                            } else {
+                                window.set_fullscreen(None);
+                            }
+                            res(Response::Ack { id });
+                        }
+                        Request::Maximize { id, maximized } => {
+                            let maximized = maximized.unwrap_or(!window.is_maximized());
+                            eprintln!("Maximize: {:?}", maximized);
+                            window.set_maximized(maximized);
+                            res(Response::Ack { id });
+                        }
+                        Request::Minimize { id, minimized } => {
+                            let minimized = minimized.unwrap_or(!window.is_minimized());
+                            eprintln!("Minimize: {:?}", minimized);
+                            window.set_minimized(minimized);
+                            res(Response::Ack { id });
                         }
                     }
                 }

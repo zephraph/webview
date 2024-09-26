@@ -140,6 +140,144 @@
           "type": "string"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "getSize"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "include_decorations": {
+          "default": null,
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id",
+        "size"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "setSize"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "size": {
+          "$ref": "#/definitions/SimpleSize"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "fullscreen"
+          ]
+        },
+        "fullscreen": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "maximize"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "maximized": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "minimize"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "minimized": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
     }
-  ]
+  ],
+  "definitions": {
+    "SimpleSize": {
+      "type": "object",
+      "required": [
+        "height",
+        "width"
+      ],
+      "properties": {
+        "height": {
+          "type": "number",
+          "format": "double"
+        },
+        "width": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    }
+  }
 }
