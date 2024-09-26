@@ -194,11 +194,11 @@
             "$type": {
               "type": "string",
               "enum": [
-                "json"
+                "boolean"
               ]
             },
             "value": {
-              "type": "string"
+              "type": "boolean"
             }
           }
         },
@@ -212,11 +212,50 @@
             "$type": {
               "type": "string",
               "enum": [
-                "boolean"
+                "float"
               ]
             },
             "value": {
-              "type": "boolean"
+              "type": "number",
+              "format": "double"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "$type",
+            "value"
+          ],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "size"
+              ]
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "height",
+                "scale_factor",
+                "width"
+              ],
+              "properties": {
+                "height": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "scale_factor": {
+                  "description": "The ratio between physical and logical sizes.",
+                  "type": "number",
+                  "format": "double"
+                },
+                "width": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
             }
           }
         }

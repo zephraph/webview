@@ -4,6 +4,7 @@ import { match, P } from "npm:ts-pattern";
 import type {
   JSONSchema7 as JSONSchema,
   JSONSchema7Definition as JSONSchemaDefinition,
+  JSONSchema7TypeName,
 } from "npm:@types/json-schema";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
@@ -45,13 +46,27 @@ const isDescriminatedUnion = (def: JSONSchemaDefinition[] | undefined) => {
     (def[0]?.required?.[0] + "").startsWith("$");
 };
 
+const isOptionalType =
+  (typeOf: string) =>
+  (type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined) => {
+    if (type && Array.isArray(type) && type[0] === typeOf) {
+      return true;
+    }
+    return false;
+  };
+
 function jsonSchemaToIR(schema: JSONSchema): DocIR {
   const nodeToIR = (node: JSONSchema): NodeIR => {
     return match(node)
       .with(
-        { type: "boolean" },
+        {
+          type: P.union("boolean", P.when(isOptionalType("boolean"))),
+        },
         (node) =>
-          ({ type: "boolean" as const, optional: !!node.default }) as const,
+          ({
+            type: "boolean" as const,
+            optional: !!node.default,
+          }) as const,
       )
       .with({ type: "integer" }, (node) => ({
         type: "int" as const,
@@ -149,11 +164,13 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
           type: "object" as const,
           properties: Object.entries(node.properties ?? {}).map((
             [key, value],
-          ) => ({
-            key,
-            required: node.required?.includes(key) ?? false,
-            value: nodeToIR(value as JSONSchema),
-          })),
+          ) => {
+            return ({
+              key,
+              required: node.required?.includes(key) ?? false,
+              value: nodeToIR(value as JSONSchema),
+            });
+          }),
         }),
       )
       .otherwise(() => ({ type: "unknown" }));

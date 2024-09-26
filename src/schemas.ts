@@ -108,6 +108,34 @@ export type WebViewRequest =
   | {
     $type: "openDevTools";
     id: string;
+  }
+  | {
+    $type: "getSize";
+    id: string;
+    include_decorations?: boolean;
+  }
+  | {
+    $type: "setSize";
+    id: string;
+    size: {
+      height: number;
+      width: number;
+    };
+  }
+  | {
+    $type: "fullscreen";
+    fullscreen?: boolean;
+    id: string;
+  }
+  | {
+    $type: "maximize";
+    id: string;
+    maximized?: boolean;
+  }
+  | {
+    $type: "minimize";
+    id: string;
+    minimized?: boolean;
   };
 export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
   "$type",
@@ -127,6 +155,31 @@ export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
     }),
     z.object({ $type: z.literal("isVisible"), id: z.string() }),
     z.object({ $type: z.literal("openDevTools"), id: z.string() }),
+    z.object({
+      $type: z.literal("getSize"),
+      id: z.string(),
+      include_decorations: z.boolean().optional(),
+    }),
+    z.object({
+      $type: z.literal("setSize"),
+      id: z.string(),
+      size: z.object({ height: z.number(), width: z.number() }),
+    }),
+    z.object({
+      $type: z.literal("fullscreen"),
+      fullscreen: z.boolean().optional(),
+      id: z.string(),
+    }),
+    z.object({
+      $type: z.literal("maximize"),
+      id: z.string(),
+      maximized: z.boolean().optional(),
+    }),
+    z.object({
+      $type: z.literal("minimize"),
+      id: z.string(),
+      minimized: z.boolean().optional(),
+    }),
   ],
 );
 
@@ -147,12 +200,20 @@ export type WebViewResponse =
         value: string;
       }
       | {
-        $type: "json";
-        value: string;
-      }
-      | {
         $type: "boolean";
         value: boolean;
+      }
+      | {
+        $type: "float";
+        value: number;
+      }
+      | {
+        $type: "size";
+        value: {
+          height: number;
+          scale_factor: number;
+          width: number;
+        };
       };
   }
   | {
@@ -169,8 +230,16 @@ export const WebViewResponse: z.ZodType<WebViewResponse> = z.discriminatedUnion(
       id: z.string(),
       result: z.discriminatedUnion("$type", [
         z.object({ $type: z.literal("string"), value: z.string() }),
-        z.object({ $type: z.literal("json"), value: z.string() }),
         z.object({ $type: z.literal("boolean"), value: z.boolean() }),
+        z.object({ $type: z.literal("float"), value: z.number() }),
+        z.object({
+          $type: z.literal("size"),
+          value: z.object({
+            height: z.number(),
+            scale_factor: z.number(),
+            width: z.number(),
+          }),
+        }),
       ]),
     }),
     z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
@@ -212,12 +281,20 @@ export type WebViewMessage =
             value: string;
           }
           | {
-            $type: "json";
-            value: string;
-          }
-          | {
             $type: "boolean";
             value: boolean;
+          }
+          | {
+            $type: "float";
+            value: number;
+          }
+          | {
+            $type: "size";
+            value: {
+              height: number;
+              scale_factor: number;
+              width: number;
+            };
           };
       }
       | {
@@ -246,8 +323,16 @@ export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
           id: z.string(),
           result: z.discriminatedUnion("$type", [
             z.object({ $type: z.literal("string"), value: z.string() }),
-            z.object({ $type: z.literal("json"), value: z.string() }),
             z.object({ $type: z.literal("boolean"), value: z.boolean() }),
+            z.object({ $type: z.literal("float"), value: z.number() }),
+            z.object({
+              $type: z.literal("size"),
+              value: z.object({
+                height: z.number(),
+                scale_factor: z.number(),
+                width: z.number(),
+              }),
+            }),
           ]),
         }),
         z.object({
