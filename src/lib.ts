@@ -30,7 +30,7 @@ import {
   WebViewResponse,
 } from "./schemas.ts";
 import { monotonicUlid as ulid } from "jsr:@std/ulid";
-import type { Except } from "npm:type-fest";
+import type { Except, Simplify } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 
@@ -210,6 +210,7 @@ export class WebView implements Disposable {
   #internalEvent = new EventEmitter();
   #externalEvent = new EventEmitter();
   #messageLoop: Promise<void>;
+  #options: WebViewOptions;
 
   /**
    * Creates a new webview window.
@@ -218,6 +219,7 @@ export class WebView implements Disposable {
    * @param webviewBinaryPath - The path to the webview binary.
    */
   constructor(options: WebViewOptions, webviewBinaryPath: string) {
+    this.#options = options;
     this.#process = new Deno.Command(webviewBinaryPath, {
       args: [JSON.stringify(options)],
       stdin: "piped",
@@ -328,20 +330,34 @@ export class WebView implements Disposable {
   /**
    * Listens for events emitted by the webview.
    */
-  on(
-    event: WebViewNotification["$type"],
-    callback: (event: WebViewNotification) => void,
+  on<E extends WebViewNotification["$type"]>(
+    event: E,
+    callback: (
+      event: Simplify<
+        Omit<Extract<WebViewNotification, { $type: E }>, "$type">
+      >,
+    ) => void,
   ) {
+    if (event === "ipc" && !this.#options.ipc) {
+      throw new Error("IPC is not enabled for this webview");
+    }
     this.#externalEvent.on(event, callback);
   }
 
   /**
    * Listens for a single event emitted by the webview.
    */
-  once(
-    event: WebViewNotification["$type"],
-    callback: (event: WebViewNotification) => void,
+  once<E extends WebViewNotification["$type"]>(
+    event: E,
+    callback: (
+      event: Simplify<
+        Omit<Extract<WebViewNotification, { $type: E }>, "$type">
+      >,
+    ) => void,
   ) {
+    if (event === "ipc" && !this.#options.ipc) {
+      throw new Error("IPC is not enabled for this webview");
+    }
     this.#externalEvent.once(event, callback);
   }
 
