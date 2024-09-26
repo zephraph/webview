@@ -47,7 +47,7 @@
     },
     "clipboard": {
       "description": "Enables clipboard access for the page rendered on Linux and Windows.\n\nmacOS doesn’t provide such method and is always enabled by default. But your app will still need to add menu item accelerators to use the clipboard shortcuts.",
-      "default": false,
+      "default": true,
       "type": "boolean"
     },
     "decorations": {

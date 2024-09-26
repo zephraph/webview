@@ -67,7 +67,7 @@ struct WebViewOptions {
     /// Enables clipboard access for the page rendered on Linux and Windows.
     ///
     /// macOS doesn’t provide such method and is always enabled by default. But your app will still need to add menu item accelerators to use the clipboard shortcuts.
-    #[serde(default)]
+    #[serde(default = "default_true")]
     clipboard: bool,
     /// Sets whether the webview should be focused when created. Default is false.
     #[serde(default)]
