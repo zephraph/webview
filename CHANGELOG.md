@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.14 (binary 0.1.11) -- 2024-09-26
+
+- fix an issue where arm64 macs weren't downloading the correct binary
+
 ## 0.0.13 (binary 0.1.11) -- 2024-09-26
 
 - added `webview.loadHtml(...)`
