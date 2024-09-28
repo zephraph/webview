@@ -1,12 +1,23 @@
+use std::borrow::Cow;
+use std::cell::RefCell;
 use std::env;
 use std::io::{self, BufRead, Write};
 use std::sync::mpsc;
+use std::sync::Arc;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
+
+use tao::{
+    event::{Event, StartCause, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
+use wry::http::Response as HttpResponse;
+use wry::WebViewBuilder;
 
 /// The version of the webview binary.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -212,20 +223,14 @@ impl From<bool> for ResultType {
 fn main() -> wry::Result<()> {
     let args: Vec<String> = env::args().collect();
     let webview_options: WebViewOptions = serde_json::from_str(&args[1]).unwrap();
-
-    use tao::{
-        event::{Event, StartCause, WindowEvent},
-        event_loop::{ControlFlow, EventLoop},
-        window::WindowBuilder,
-    };
-    use wry::WebViewBuilder;
+    let html_cell = Arc::new(RefCell::new("".to_string()));
 
     let (tx, to_deno) = mpsc::channel::<Message>();
     let (from_deno, rx) = mpsc::channel::<Request>();
 
     let event_loop = EventLoop::new();
     let mut window_builder = WindowBuilder::new()
-        .with_title(webview_options.title)
+        .with_title(webview_options.title.clone())
         .with_transparent(webview_options.transparent)
         .with_decorations(webview_options.decorations);
     match webview_options.size {
@@ -243,10 +248,22 @@ fn main() -> wry::Result<()> {
     }
     let window = window_builder.build(&event_loop).unwrap();
 
+    let html_cell_init = html_cell.clone();
     let mut webview_builder = match webview_options.target {
         WebViewTarget::Url(url) => WebViewBuilder::new(&window).with_url(url),
-        WebViewTarget::Html(html) => WebViewBuilder::new(&window).with_html(html),
+        WebViewTarget::Html(html) => {
+            html_cell.replace(html);
+            WebViewBuilder::new(&window).with_url("load-html://init")
+        }
     }
+    .with_custom_protocol("load-html".into(), move |_req| {
+        HttpResponse::builder()
+            .header("Content-Type", "text/html")
+            .body(Cow::Owned(
+                html_cell_init.as_ref().borrow().as_bytes().to_vec(),
+            ))
+            .unwrap()
+    })
     .with_transparent(webview_options.transparent)
     .with_autoplay(webview_options.autoplay)
     .with_incognito(webview_options.incognito)
@@ -431,7 +448,10 @@ fn main() -> wry::Result<()> {
                             res(Response::Ack { id });
                         }
                         Request::LoadHtml { id, html } => {
-                            webview.load_html(&html).unwrap();
+                            html_cell.replace(html);
+                            webview
+                                .load_url(&format!("load-html://load/{}", id))
+                                .unwrap();
                             res(Response::Ack { id });
                         }
                     }
