@@ -97,11 +97,24 @@ fn default_true() -> bool {
 
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[serde(untagged)]
 enum WebViewTarget {
-    /// Url to load in the webview.
-    Url(String),
-    /// Html to load in the webview.
-    Html(String),
+    Url {
+        /// Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.
+        url: String,
+    },
+    Html {
+        /// Html to load in the webview.
+        html: String,
+        /// What to set as the origin of the webview when loading html.
+        #[serde(default = "default_origin")]
+        origin: String,
+    },
+}
+
+/// The default origin to use when loading html.
+fn default_origin() -> String {
+    "init".to_string()
 }
 
 // --- RPC Definitions ---
@@ -120,8 +133,14 @@ enum Message {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 enum Notification {
-    Started { version: String },
-    Ipc { message: String },
+    Started {
+        /// The version of the webview binary
+        version: String,
+    },
+    Ipc {
+        /// The message sent from the webview UI to the client.
+        message: String,
+    },
     Closed,
 }
 
@@ -131,53 +150,84 @@ enum Notification {
 #[serde(tag = "$type")]
 enum Request {
     GetVersion {
+        /// The id of the request.
         id: String,
     },
     Eval {
+        /// The id of the request.
         id: String,
+        /// The javascript to evaluate.
         js: String,
     },
     SetTitle {
+        /// The id of the request.
         id: String,
+        /// The title to set.
         title: String,
     },
     GetTitle {
+        /// The id of the request.
         id: String,
     },
     SetVisibility {
+        /// The id of the request.
         id: String,
+        /// Whether the window should be visible or hidden.
         visible: bool,
     },
     IsVisible {
+        /// The id of the request.
         id: String,
     },
     OpenDevTools {
+        /// The id of the request.
         id: String,
     },
     GetSize {
+        /// The id of the request.
         id: String,
+        /// Whether to include the title bar and borders in the size measurement.
         #[serde(default)]
         include_decorations: Option<bool>,
     },
     SetSize {
+        /// The id of the request.
         id: String,
+        /// The size to set.
         size: SimpleSize,
     },
     Fullscreen {
+        /// The id of the request.
         id: String,
+        /// Whether to enter fullscreen mode.
+        /// If left unspecified, the window will enter fullscreen mode if it is not already in fullscreen mode
+        /// or exit fullscreen mode if it is currently in fullscreen mode.
         fullscreen: Option<bool>,
     },
     Maximize {
+        /// The id of the request.
         id: String,
+        /// Whether to maximize the window.
+        /// If left unspecified, the window will be maximized if it is not already maximized
+        /// or restored if it was previously maximized.
         maximized: Option<bool>,
     },
     Minimize {
+        /// The id of the request.
         id: String,
+        /// Whether to minimize the window.
+        /// If left unspecified, the window will be minimized if it is not already minimized
+        /// or restored if it was previously minimized.
         minimized: Option<bool>,
     },
     LoadHtml {
+        /// The id of the request.
         id: String,
+        /// HTML to set as the content of the webview.
         html: String,
+        /// What to set as the origin of the webview when loading html.
+        /// If not specified, the origin will be set to the value of the `origin` field when the webview was created.
+        origin: Option<String>,
     },
 }
 
@@ -201,7 +251,9 @@ enum ResultType {
     Boolean(bool),
     Float(f64),
     Size {
+        /// The width of the window in logical pixels.
         width: f64,
+        /// The height of the window in logical pixels.
         height: f64,
         /// The ratio between physical and logical sizes.
         scale_factor: f64,
@@ -223,7 +275,12 @@ impl From<bool> for ResultType {
 fn main() -> wry::Result<()> {
     let args: Vec<String> = env::args().collect();
     let webview_options: WebViewOptions = serde_json::from_str(&args[1]).unwrap();
+
+    // These two cells are used to store the html and origin if the webview is created with html.
+    // The html cell is needed to provide a value to the custom protocol and origin is needed
+    // as a fallback if `load_html` is called without an origin.
     let html_cell = Arc::new(RefCell::new("".to_string()));
+    let origin_cell = Arc::new(RefCell::new(default_origin().to_string()));
 
     let (tx, to_deno) = mpsc::channel::<Message>();
     let (from_deno, rx) = mpsc::channel::<Request>();
@@ -250,10 +307,11 @@ fn main() -> wry::Result<()> {
 
     let html_cell_init = html_cell.clone();
     let mut webview_builder = match webview_options.target {
-        WebViewTarget::Url(url) => WebViewBuilder::new(&window).with_url(url),
-        WebViewTarget::Html(html) => {
+        WebViewTarget::Url { url } => WebViewBuilder::new(&window).with_url(url),
+        WebViewTarget::Html { html, origin } => {
+            origin_cell.replace(origin.clone());
             html_cell.replace(html);
-            WebViewBuilder::new(&window).with_url("load-html://init")
+            WebViewBuilder::new(&window).with_url(&format!("load-html://{}", origin))
         }
     }
     .with_custom_protocol("load-html".into(), move |_req| {
@@ -447,10 +505,18 @@ fn main() -> wry::Result<()> {
                             window.set_minimized(minimized);
                             res(Response::Ack { id });
                         }
-                        Request::LoadHtml { id, html } => {
+                        Request::LoadHtml { id, html, origin } => {
                             html_cell.replace(html);
+                            let origin = match origin {
+                                Some(origin) => {
+                                    origin_cell.replace(origin.clone());
+                                    origin
+                                }
+                                None => origin_cell.borrow().clone(),
+                            };
+
                             webview
-                                .load_url(&format!("load-html://load/{}", id))
+                                .load_url(&format!("load-html://{}?{}", origin, id))
                                 .unwrap();
                             res(Response::Ack { id });
                         }

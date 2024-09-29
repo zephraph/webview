@@ -3,32 +3,35 @@
   "title": "WebViewOptions",
   "description": "Options for creating a webview.",
   "type": "object",
-  "oneOf": [
+  "anyOf": [
     {
-      "description": "Url to load in the webview.",
       "type": "object",
       "required": [
         "url"
       ],
       "properties": {
         "url": {
+          "description": "Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.",
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
-      "description": "Html to load in the webview.",
       "type": "object",
       "required": [
         "html"
       ],
       "properties": {
         "html": {
+          "description": "Html to load in the webview.",
+          "type": "string"
+        },
+        "origin": {
+          "description": "What to set as the origin of the webview when loading html.",
+          "default": "init",
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
   "required": [

@@ -46,10 +46,14 @@ export type WebViewOptions =
   }
   & (
     | {
+      /** Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead. */
       url: string;
     }
     | {
+      /** Html to load in the webview. */
       html: string;
+      /** What to set as the origin of the webview when loading html. */
+      origin?: string;
     }
   );
 export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
@@ -71,7 +75,10 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
     title: z.string(),
     transparent: z.boolean().optional(),
   }),
-  z.union([z.object({ url: z.string() }), z.object({ html: z.string() })]),
+  z.union([
+    z.object({ url: z.string() }),
+    z.object({ html: z.string(), origin: z.string().optional() }),
+  ]),
 );
 
 /**
@@ -80,43 +87,57 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
 export type WebViewRequest =
   | {
     $type: "getVersion";
+    /** The id of the request. */
     id: string;
   }
   | {
     $type: "eval";
+    /** The id of the request. */
     id: string;
+    /** The javascript to evaluate. */
     js: string;
   }
   | {
     $type: "setTitle";
+    /** The id of the request. */
     id: string;
+    /** The title to set. */
     title: string;
   }
   | {
     $type: "getTitle";
+    /** The id of the request. */
     id: string;
   }
   | {
     $type: "setVisibility";
+    /** The id of the request. */
     id: string;
+    /** Whether the window should be visible or hidden. */
     visible: boolean;
   }
   | {
     $type: "isVisible";
+    /** The id of the request. */
     id: string;
   }
   | {
     $type: "openDevTools";
+    /** The id of the request. */
     id: string;
   }
   | {
     $type: "getSize";
+    /** The id of the request. */
     id: string;
+    /** Whether to include the title bar and borders in the size measurement. */
     include_decorations?: boolean;
   }
   | {
     $type: "setSize";
+    /** The id of the request. */
     id: string;
+    /** The size to set. */
     size: {
       height: number;
       width: number;
@@ -124,23 +145,33 @@ export type WebViewRequest =
   }
   | {
     $type: "fullscreen";
+    /** Whether to enter fullscreen mode. If left unspecified, the window will enter fullscreen mode if it is not already in fullscreen mode or exit fullscreen mode if it is currently in fullscreen mode. */
     fullscreen?: boolean;
+    /** The id of the request. */
     id: string;
   }
   | {
     $type: "maximize";
+    /** The id of the request. */
     id: string;
+    /** Whether to maximize the window. If left unspecified, the window will be maximized if it is not already maximized or restored if it was previously maximized. */
     maximized?: boolean;
   }
   | {
     $type: "minimize";
+    /** The id of the request. */
     id: string;
+    /** Whether to minimize the window. If left unspecified, the window will be minimized if it is not already minimized or restored if it was previously minimized. */
     minimized?: boolean;
   }
   | {
     $type: "loadHtml";
+    /** HTML to set as the content of the webview. */
     html: string;
+    /** The id of the request. */
     id: string;
+    /** What to set as the origin of the webview when loading html. If not specified, the origin will be set to the value of the `origin` field when the webview was created. */
+    origin?: string;
   };
 export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
   "$type",
@@ -189,6 +220,7 @@ export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
       $type: z.literal("loadHtml"),
       html: z.string(),
       id: z.string(),
+      origin: z.string().optional(),
     }),
   ],
 );
@@ -220,8 +252,11 @@ export type WebViewResponse =
       | {
         $type: "size";
         value: {
+          /** The height of the window in logical pixels. */
           height: number;
+          /** The ratio between physical and logical sizes. */
           scale_factor: number;
+          /** The width of the window in logical pixels. */
           width: number;
         };
       };
@@ -265,10 +300,12 @@ export type WebViewMessage =
     data:
       | {
         $type: "started";
+        /** The version of the webview binary */
         version: string;
       }
       | {
         $type: "ipc";
+        /** The message sent from the webview UI to the client. */
         message: string;
       }
       | {
@@ -301,8 +338,11 @@ export type WebViewMessage =
           | {
             $type: "size";
             value: {
+              /** The height of the window in logical pixels. */
               height: number;
+              /** The ratio between physical and logical sizes. */
               scale_factor: number;
+              /** The width of the window in logical pixels. */
               width: number;
             };
           };
