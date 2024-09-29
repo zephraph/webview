@@ -73,6 +73,14 @@
       "default": false,
       "type": "boolean"
     },
+    "initializationScript": {
+      "description": "Run JavaScript code when loading new pages. When the webview loads a new page, this code will be executed. It is guaranteed that the code is executed before window.onload.",
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "ipc": {
       "description": "Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`.",
       "default": false,
