@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.15 (binary 0.1.12) -- 2024-09-28
+
+- Pages loaded with `html` are now considered to be in a secure context.
+- When creating a webview with `html` or calling `webview.loadHtml()` the webview now has a default origin which can be changed via the `origin` parameter
+- Improved type generation to output more doc strings and documented more code
+- Update TLDraw example with a persistence key
+
 ## 0.0.14 (binary 0.1.11) -- 2024-09-26
 
 - fix an issue where arm64 macs weren't downloading the correct binary
