@@ -32,6 +32,8 @@ export type WebViewOptions =
      * Platform-specific: - Windows: Requires WebView2 Runtime version 101.0.1210.39 or higher, does nothing on older versions, see https://learn.microsoft.com/en-us/microsoft-edge/webview2/release-notes/archive?tabs=dotnetcsharp#10121039
      */
     incognito?: boolean;
+    /** Run JavaScript code when loading new pages. When the webview loads a new page, this code will be executed. It is guaranteed that the code is executed before window.onload. */
+    initializationScript?: string;
     /** Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`. */
     ipc?: boolean;
     /** The size of the window. */
@@ -65,6 +67,7 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
     devtools: z.boolean().optional(),
     focused: z.boolean().optional(),
     incognito: z.boolean().optional(),
+    initializationScript: z.string().optional(),
     ipc: z.boolean().optional(),
     size: z.union([
       z.literal("maximized"),

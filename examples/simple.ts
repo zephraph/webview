@@ -4,6 +4,8 @@ using webview = await createWebView({
   title: "Simple",
   html: "<h1>Hello, World!</h1>",
   devtools: true,
+  initializationScript:
+    "console.log('This is printed from initializationScript!')",
 });
 
 webview.on("started", async () => {

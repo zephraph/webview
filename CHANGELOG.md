@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.16 (binary 0.1.13) -- 2024-09-29
+
+- Add `initializationScript` to `WebViewOptions`. Allows providing JS that runs before `onLoad`.
+
 ## 0.0.15 (binary 0.1.12) -- 2024-09-28
 
 - Pages loaded with `html` are now considered to be in a secure context.
