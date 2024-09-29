@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <div style={{ position: "absolute", inset: 0 }}>
-        <Tldraw cameraOptions={{ wheelBehavior: "zoom" }} />
+        <Tldraw persistenceKey="tldraw-example" cameraOptions={{ wheelBehavior: "zoom" }} />
       </div>
     </>
   );

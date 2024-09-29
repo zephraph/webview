@@ -147,6 +147,7 @@
               ],
               "properties": {
                 "height": {
+                  "description": "The height of the window in logical pixels.",
                   "type": "number",
                   "format": "double"
                 },
@@ -156,6 +157,7 @@
                   "format": "double"
                 },
                 "width": {
+                  "description": "The width of the window in logical pixels.",
                   "type": "number",
                   "format": "double"
                 }

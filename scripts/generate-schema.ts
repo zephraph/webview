@@ -55,6 +55,13 @@ const isOptionalType =
     return false;
   };
 
+const flattenUnion = (union: NodeIR[], member: NodeIR) => {
+  if (member.type === "union") {
+    return union.concat(member.members);
+  }
+  return union.concat(member);
+};
+
 function jsonSchemaToIR(schema: JSONSchema): DocIR {
   const nodeToIR = (node: JSONSchema): NodeIR => {
     return match(node)
@@ -79,8 +86,10 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
         maximum: node.maximum,
       }))
       .with(
-        { type: "string" },
+        { type: P.union("string", P.when(isOptionalType("string"))) },
         (node) => {
+          const isOptional =
+            Array.isArray(node.type) && node.type.includes("null") || false;
           if (node.enum) {
             if (node.enum.length === 1) {
               return {
@@ -96,7 +105,10 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
               })),
             };
           }
-          return ({ type: "string" as const, optional: !!node.default });
+          return ({
+            type: "string" as const,
+            optional: !!node.default || isOptional,
+          });
         },
       )
       .with(
@@ -114,12 +126,26 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
             schema.definitions![node.$ref.split("/").pop()!] as JSONSchema,
           ),
       )
+      .with({ allOf: P.array() }, (node) => {
+        if (node.allOf?.length === 1) {
+          return nodeToIR(node.allOf[0] as JSONSchema);
+        }
+        return {
+          type: "intersection" as const,
+          members: node.allOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [],
+        };
+      })
       .with(
-        { oneOf: P.array() },
+        P.union({ oneOf: P.array() }, { anyOf: P.array() }),
         (node) => {
           const union = {
             type: "union" as const,
-            members: node.oneOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [],
+            members:
+              ((node.oneOf ?? node.anyOf)?.map((v) =>
+                nodeToIR(v as JSONSchema)
+              ) ?? [])
+                .filter((v) => v.type !== "unknown")
+                .reduce(flattenUnion, [] as NodeIR[]),
           };
           if (node.properties) {
             return ({
@@ -144,21 +170,6 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
         },
       )
       .with(
-        { anyOf: P.array() },
-        () => ({
-          type: "union" as const,
-          members: (node.anyOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [])
-            .filter((v) => v.type !== "unknown")
-            // flatten nested unions
-            .reduce((union, member) => {
-              if (member.type === "union") {
-                return union.concat(member.members);
-              }
-              return union.concat(member);
-            }, [] as NodeIR[]),
-        }),
-      )
-      .with(
         { type: "object" },
         () => ({
           type: "object" as const,
@@ -168,6 +179,7 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
             return ({
               key,
               required: node.required?.includes(key) ?? false,
+              description: (value as JSONSchema).description,
               value: nodeToIR(value as JSONSchema),
             });
           }),

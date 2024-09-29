@@ -17,6 +17,7 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         }
       }
@@ -36,9 +37,11 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "js": {
+          "description": "The javascript to evaluate.",
           "type": "string"
         }
       }
@@ -58,9 +61,11 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "title": {
+          "description": "The title to set.",
           "type": "string"
         }
       }
@@ -79,6 +84,7 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         }
       }
@@ -98,9 +104,11 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "visible": {
+          "description": "Whether the window should be visible or hidden.",
           "type": "boolean"
         }
       }
@@ -119,6 +127,7 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         }
       }
@@ -137,6 +146,7 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         }
       }
@@ -155,9 +165,11 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "include_decorations": {
+          "description": "Whether to include the title bar and borders in the size measurement.",
           "default": null,
           "type": [
             "boolean",
@@ -181,10 +193,16 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "size": {
-          "$ref": "#/definitions/SimpleSize"
+          "description": "The size to set.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SimpleSize"
+            }
+          ]
         }
       }
     },
@@ -202,12 +220,14 @@
           ]
         },
         "fullscreen": {
+          "description": "Whether to enter fullscreen mode. If left unspecified, the window will enter fullscreen mode if it is not already in fullscreen mode or exit fullscreen mode if it is currently in fullscreen mode.",
           "type": [
             "boolean",
             "null"
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         }
       }
@@ -226,9 +246,11 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "maximized": {
+          "description": "Whether to maximize the window. If left unspecified, the window will be maximized if it is not already maximized or restored if it was previously maximized.",
           "type": [
             "boolean",
             "null"
@@ -250,9 +272,11 @@
           ]
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
         },
         "minimized": {
+          "description": "Whether to minimize the window. If left unspecified, the window will be minimized if it is not already minimized or restored if it was previously minimized.",
           "type": [
             "boolean",
             "null"
@@ -275,10 +299,19 @@
           ]
         },
         "html": {
+          "description": "HTML to set as the content of the webview.",
           "type": "string"
         },
         "id": {
+          "description": "The id of the request.",
           "type": "string"
+        },
+        "origin": {
+          "description": "What to set as the origin of the webview when loading html. If not specified, the origin will be set to the value of the `origin` field when the webview was created.",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     }
