@@ -1,7 +1,7 @@
 name: Publish
 on:
   workflow_run:
-    workflows: ["Verify"]
+    workflows: ["Verify", "Release Rust Binary"]
     types:
       - completed
     branches: [main]
