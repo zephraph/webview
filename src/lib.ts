@@ -464,6 +464,14 @@ export class WebView implements Disposable {
   }
 
   /**
+   * Loads a URL in the webview.
+   */
+  async loadUrl(url: string, headers?: Record<string, string>): Promise<void> {
+    const result = await this.#send({ $type: "loadUrl", url, headers });
+    return returnAck(result);
+  }
+
+  /**
    * Destroys the webview and cleans up resources.
    *
    * Alternatively you can use the disposible interface.

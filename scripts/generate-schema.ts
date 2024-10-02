@@ -34,6 +34,7 @@ type NodeIR =
       value: NodeIR;
     }[];
   }
+  | { type: "record"; valueType: string }
   | { type: "boolean"; optional?: boolean }
   | { type: "string"; optional?: boolean }
   | { type: "literal"; value: string }
@@ -170,20 +171,34 @@ function jsonSchemaToIR(schema: JSONSchema): DocIR {
         },
       )
       .with(
-        { type: "object" },
-        () => ({
-          type: "object" as const,
-          properties: Object.entries(node.properties ?? {}).map((
-            [key, value],
-          ) => {
-            return ({
+        { type: P.union("object", P.when(isOptionalType("object"))) },
+        () => {
+          if (Object.keys(node.properties ?? {}).length === 0) {
+            if (
+              typeof node.additionalProperties === "object" &&
+              "type" in node.additionalProperties
+            ) {
+              return {
+                type: "record" as const,
+                valueType: typeof node.additionalProperties.type === "string"
+                  ? node.additionalProperties.type
+                  : "unknown",
+              };
+            }
+            return { type: "record" as const, valueType: "unknown" };
+          }
+          return ({
+            type: "object" as const,
+            properties: Object.entries(node.properties ?? {}).map((
+              [key, value],
+            ) => ({
               key,
               required: node.required?.includes(key) ?? false,
               description: (value as JSONSchema).description,
               value: nodeToIR(value as JSONSchema),
-            });
-          }),
-        }),
+            })),
+          });
+        },
       )
       .otherwise(() => ({ type: "unknown" }));
   };
@@ -215,6 +230,9 @@ function generateTypes(ir: DocIR) {
       .with({ type: "boolean" }, () => w("boolean"))
       .with({ type: "string" }, () => w("string"))
       .with({ type: "literal" }, (node) => w(`"${node.value}"`))
+      .with({ type: "record" }, (node) => {
+        w(`Record<string, ${node.valueType}>`);
+      })
       .with({ type: "object" }, (node) => {
         wn("{");
         for (const { key, required, description, value } of node.properties) {
@@ -300,6 +318,9 @@ function generateZodSchema(ir: DocIR) {
         { type: "literal" },
         (node) => w(`z.literal("${node.value}")`),
       )
+      .with({ type: "record" }, (node) => {
+        w(`z.record(z.string(), z.${node.valueType}())`);
+      })
       .with({ type: "object" }, (node) => {
         w("z.object({");
         for (const { key, required, value } of node.properties) {
