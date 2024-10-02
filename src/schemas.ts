@@ -45,6 +45,8 @@ export type WebViewOptions =
     title: string;
     /** Sets whether the window should be transparent. */
     transparent?: boolean;
+    /** Sets the user agent to use when loading pages. */
+    userAgent?: string;
   }
   & (
     | {
@@ -79,6 +81,7 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
       .optional(),
     title: z.string(),
     transparent: z.boolean().optional(),
+    userAgent: z.string().optional(),
   }),
   z.union([
     z.object({

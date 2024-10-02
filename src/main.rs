@@ -95,6 +95,9 @@ struct WebViewOptions {
     #[serde(default)]
     /// Run JavaScript code when loading new pages. When the webview loads a new page, this code will be executed. It is guaranteed that the code is executed before window.onload.
     initialization_script: Option<String>,
+    /// Sets the user agent to use when loading pages.
+    #[serde(default)]
+    user_agent: Option<String>,
 }
 
 fn default_true() -> bool {
@@ -373,6 +376,9 @@ fn main() -> wry::Result<()> {
     if let Some(initialization_script) = webview_options.initialization_script {
         webview_builder =
             webview_builder.with_initialization_script(initialization_script.as_str());
+    }
+    if let Some(user_agent) = webview_options.user_agent {
+        webview_builder = webview_builder.with_user_agent(user_agent.as_str());
     }
     let webview = webview_builder.build()?;
 

@@ -6,6 +6,7 @@ using webview = await createWebView({
   headers: {
     "Content-Type": "text/html",
   },
+  userAgent: "curl/7.81.0",
   devtools: true,
 });
 

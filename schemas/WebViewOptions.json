@@ -115,6 +115,14 @@
       "description": "Sets whether the window should be transparent.",
       "default": false,
       "type": "boolean"
+    },
+    "userAgent": {
+      "description": "Sets the user agent to use when loading pages.",
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "definitions": {
