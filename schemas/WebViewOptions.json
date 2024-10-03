@@ -10,6 +10,16 @@
         "url"
       ],
       "properties": {
+        "headers": {
+          "description": "Optional headers to send with the request.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "url": {
           "description": "Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.",
           "type": "string"
@@ -105,6 +115,14 @@
       "description": "Sets whether the window should be transparent.",
       "default": false,
       "type": "boolean"
+    },
+    "userAgent": {
+      "description": "Sets the user agent to use when loading pages.",
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "definitions": {

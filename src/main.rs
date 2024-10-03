@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::env;
 use std::io::{self, BufRead, Write};
+use std::str::FromStr;
 use std::sync::mpsc;
 use std::sync::Arc;
 
@@ -16,6 +18,7 @@ use tao::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+use wry::http::header::{HeaderName, HeaderValue};
 use wry::http::Response as HttpResponse;
 use wry::WebViewBuilder;
 
@@ -92,6 +95,9 @@ struct WebViewOptions {
     #[serde(default)]
     /// Run JavaScript code when loading new pages. When the webview loads a new page, this code will be executed. It is guaranteed that the code is executed before window.onload.
     initialization_script: Option<String>,
+    /// Sets the user agent to use when loading pages.
+    #[serde(default)]
+    user_agent: Option<String>,
 }
 
 fn default_true() -> bool {
@@ -105,6 +111,8 @@ enum WebViewTarget {
     Url {
         /// Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.
         url: String,
+        /// Optional headers to send with the request.
+        headers: Option<HashMap<String, String>>,
     },
     Html {
         /// Html to load in the webview.
@@ -232,6 +240,14 @@ enum Request {
         /// If not specified, the origin will be set to the value of the `origin` field when the webview was created.
         origin: Option<String>,
     },
+    LoadUrl {
+        /// The id of the request.
+        id: String,
+        /// URL to load in the webview.
+        url: String,
+        /// Optional headers to send with the request.
+        headers: Option<HashMap<String, String>>,
+    },
 }
 
 /// Responses from the webview to the client.
@@ -310,7 +326,22 @@ fn main() -> wry::Result<()> {
 
     let html_cell_init = html_cell.clone();
     let mut webview_builder = match webview_options.target {
-        WebViewTarget::Url { url } => WebViewBuilder::new(&window).with_url(url),
+        WebViewTarget::Url { url, headers } => {
+            let mut webview_builder = WebViewBuilder::new(&window).with_url(url);
+            if let Some(headers) = headers {
+                let headers = headers
+                    .into_iter()
+                    .map(|(k, v)| {
+                        (
+                            HeaderName::from_str(&k).unwrap(),
+                            HeaderValue::from_str(&v).unwrap(),
+                        )
+                    })
+                    .collect();
+                webview_builder = webview_builder.with_headers(headers);
+            }
+            webview_builder
+        }
         WebViewTarget::Html { html, origin } => {
             origin_cell.replace(origin.clone());
             html_cell.replace(html);
@@ -345,6 +376,9 @@ fn main() -> wry::Result<()> {
     if let Some(initialization_script) = webview_options.initialization_script {
         webview_builder =
             webview_builder.with_initialization_script(initialization_script.as_str());
+    }
+    if let Some(user_agent) = webview_options.user_agent {
+        webview_builder = webview_builder.with_user_agent(user_agent.as_str());
     }
     let webview = webview_builder.build()?;
 
@@ -526,6 +560,30 @@ fn main() -> wry::Result<()> {
                                 .load_url(&format!("load-html://{}?{}", origin, id))
                                 .unwrap();
                             res(Response::Ack { id });
+                        }
+                        Request::LoadUrl { id, url, headers } => {
+                            let resp = match headers {
+                                Some(headers) => {
+                                    let headers = headers
+                                        .into_iter()
+                                        .map(|(k, v)| {
+                                            (
+                                                HeaderName::from_str(&k).unwrap(),
+                                                HeaderValue::from_str(&v).unwrap(),
+                                            )
+                                        })
+                                        .collect();
+                                    webview.load_url_with_headers(&url, headers)
+                                }
+                                None => webview.load_url(&url),
+                            };
+                            match resp {
+                                Ok(_) => res(Response::Ack { id }),
+                                Err(err) => res(Response::Err {
+                                    id,
+                                    message: err.to_string(),
+                                }),
+                            }
                         }
                     }
                 }

@@ -45,9 +45,13 @@ export type WebViewOptions =
     title: string;
     /** Sets whether the window should be transparent. */
     transparent?: boolean;
+    /** Sets the user agent to use when loading pages. */
+    userAgent?: string;
   }
   & (
     | {
+      /** Optional headers to send with the request. */
+      headers?: Record<string, string>;
       /** Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead. */
       url: string;
     }
@@ -77,9 +81,13 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.intersection(
       .optional(),
     title: z.string(),
     transparent: z.boolean().optional(),
+    userAgent: z.string().optional(),
   }),
   z.union([
-    z.object({ url: z.string() }),
+    z.object({
+      headers: z.record(z.string(), z.string()).optional(),
+      url: z.string(),
+    }),
     z.object({ html: z.string(), origin: z.string().optional() }),
   ]),
 );
@@ -175,6 +183,15 @@ export type WebViewRequest =
     id: string;
     /** What to set as the origin of the webview when loading html. If not specified, the origin will be set to the value of the `origin` field when the webview was created. */
     origin?: string;
+  }
+  | {
+    $type: "loadUrl";
+    /** Optional headers to send with the request. */
+    headers?: Record<string, string>;
+    /** The id of the request. */
+    id: string;
+    /** URL to load in the webview. */
+    url: string;
   };
 export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
   "$type",
@@ -224,6 +241,12 @@ export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
       html: z.string(),
       id: z.string(),
       origin: z.string().optional(),
+    }),
+    z.object({
+      $type: z.literal("loadUrl"),
+      headers: z.record(z.string(), z.string()).optional(),
+      id: z.string(),
+      url: z.string(),
     }),
   ],
 );

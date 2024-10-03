@@ -314,6 +314,40 @@
           ]
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "$type",
+        "id",
+        "url"
+      ],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "loadUrl"
+          ]
+        },
+        "headers": {
+          "description": "Optional headers to send with the request.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "id": {
+          "description": "The id of the request.",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL to load in the webview.",
+          "type": "string"
+        }
+      }
     }
   ],
   "definitions": {

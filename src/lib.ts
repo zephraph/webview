@@ -38,7 +38,7 @@ export type { WebViewOptions } from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.13";
+export const BIN_VERSION = "0.1.14";
 
 type WebViewNotification = Extract<
   WebViewMessage,
@@ -460,6 +460,14 @@ export class WebView implements Disposable {
    */
   async loadHtml(html: string): Promise<void> {
     const result = await this.#send({ $type: "loadHtml", html });
+    return returnAck(result);
+  }
+
+  /**
+   * Loads a URL in the webview.
+   */
+  async loadUrl(url: string, headers?: Record<string, string>): Promise<void> {
+    const result = await this.#send({ $type: "loadUrl", url, headers });
     return returnAck(result);
   }
 
