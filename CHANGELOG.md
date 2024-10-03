@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.17 (binary 0.1.14) -- 2024-10-02
+
+- Add `webview.loadUrl` to load a new URL after the webview is initialized
+- Add the ability to specify headers when instantiating a webview with a URL
+- Add `userAgent` to `WebViewOptions` to construct a new webview with a custom user agent.
+
 ## 0.0.16 (binary 0.1.13) -- 2024-09-29
 
 - Add `initializationScript` to `WebViewOptions`. Allows providing JS that runs before `onLoad`.
