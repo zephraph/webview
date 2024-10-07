@@ -1,9 +1,9 @@
 {
   "name": "@justbe/webview",
-  "exports": "./src/lib.ts",
+  "exports": "./main.ts",
   "version": "0.0.17",
   "publish": {
-    "include": ["README.md", "LICENSE", "src/**/*.ts"]
+    "include": ["README.md", "LICENSE", "*.ts"]
   },
   "imports": {
     "jsr:@std/fs": "jsr:@std/fs@^1.0.3",
