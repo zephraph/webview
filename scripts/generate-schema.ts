@@ -8,7 +8,8 @@ import type {
 } from "npm:@types/json-schema";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
-const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
+const outputFile =
+  new URL("../src/clients/deno/schemas.ts", import.meta.url).pathname;
 
 // defining an IR
 interface DocIR {
