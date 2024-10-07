@@ -1,4 +1,4 @@
-name: Publish
+name: Publish Deno Client
 on:
   workflow_run:
     workflows: ["Verify", "Release Rust Binary"]
@@ -9,6 +9,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/clients/deno
 
     permissions:
       contents: write
