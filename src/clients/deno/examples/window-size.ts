@@ -1,4 +1,4 @@
-import { createWebView } from "../src/lib.ts";
+import { createWebView } from "../main.ts";
 
 using webview = await createWebView({
   title: "Window Size",
