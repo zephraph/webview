@@ -2,6 +2,110 @@
 import { z } from "npm:zod";
 
 /**
+ * Complete definition of all outbound messages from the webview to the client.
+ */
+export type WebViewMessage =
+  | {
+    $type: "notification";
+    data:
+      | {
+        $type: "started";
+        /** The version of the webview binary */
+        version: string;
+      }
+      | {
+        $type: "ipc";
+        /** The message sent from the webview UI to the client. */
+        message: string;
+      }
+      | {
+        $type: "closed";
+      };
+  }
+  | {
+    $type: "response";
+    data:
+      | {
+        $type: "ack";
+        id: string;
+      }
+      | {
+        $type: "result";
+        id: string;
+        result:
+          | {
+            $type: "string";
+            value: string;
+          }
+          | {
+            $type: "boolean";
+            value: boolean;
+          }
+          | {
+            $type: "float";
+            value: number;
+          }
+          | {
+            $type: "size";
+            value: {
+              /** The height of the window in logical pixels. */
+              height: number;
+              /** The ratio between physical and logical sizes. */
+              scale_factor: number;
+              /** The width of the window in logical pixels. */
+              width: number;
+            };
+          };
+      }
+      | {
+        $type: "err";
+        id: string;
+        message: string;
+      };
+  };
+export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
+  "$type",
+  [
+    z.object({
+      $type: z.literal("notification"),
+      data: z.discriminatedUnion("$type", [
+        z.object({ $type: z.literal("started"), version: z.string() }),
+        z.object({ $type: z.literal("ipc"), message: z.string() }),
+        z.object({ $type: z.literal("closed") }),
+      ]),
+    }),
+    z.object({
+      $type: z.literal("response"),
+      data: z.discriminatedUnion("$type", [
+        z.object({ $type: z.literal("ack"), id: z.string() }),
+        z.object({
+          $type: z.literal("result"),
+          id: z.string(),
+          result: z.discriminatedUnion("$type", [
+            z.object({ $type: z.literal("string"), value: z.string() }),
+            z.object({ $type: z.literal("boolean"), value: z.boolean() }),
+            z.object({ $type: z.literal("float"), value: z.number() }),
+            z.object({
+              $type: z.literal("size"),
+              value: z.object({
+                height: z.number(),
+                scale_factor: z.number(),
+                width: z.number(),
+              }),
+            }),
+          ]),
+        }),
+        z.object({
+          $type: z.literal("err"),
+          id: z.string(),
+          message: z.string(),
+        }),
+      ]),
+    }),
+  ],
+);
+
+/**
  * Options for creating a webview.
  */
 export type WebViewOptions =
@@ -314,109 +418,5 @@ export const WebViewResponse: z.ZodType<WebViewResponse> = z.discriminatedUnion(
       ]),
     }),
     z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
-  ],
-);
-
-/**
- * Complete definition of all outbound messages from the webview to the client.
- */
-export type WebViewMessage =
-  | {
-    $type: "notification";
-    data:
-      | {
-        $type: "started";
-        /** The version of the webview binary */
-        version: string;
-      }
-      | {
-        $type: "ipc";
-        /** The message sent from the webview UI to the client. */
-        message: string;
-      }
-      | {
-        $type: "closed";
-      };
-  }
-  | {
-    $type: "response";
-    data:
-      | {
-        $type: "ack";
-        id: string;
-      }
-      | {
-        $type: "result";
-        id: string;
-        result:
-          | {
-            $type: "string";
-            value: string;
-          }
-          | {
-            $type: "boolean";
-            value: boolean;
-          }
-          | {
-            $type: "float";
-            value: number;
-          }
-          | {
-            $type: "size";
-            value: {
-              /** The height of the window in logical pixels. */
-              height: number;
-              /** The ratio between physical and logical sizes. */
-              scale_factor: number;
-              /** The width of the window in logical pixels. */
-              width: number;
-            };
-          };
-      }
-      | {
-        $type: "err";
-        id: string;
-        message: string;
-      };
-  };
-export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
-  "$type",
-  [
-    z.object({
-      $type: z.literal("notification"),
-      data: z.discriminatedUnion("$type", [
-        z.object({ $type: z.literal("started"), version: z.string() }),
-        z.object({ $type: z.literal("ipc"), message: z.string() }),
-        z.object({ $type: z.literal("closed") }),
-      ]),
-    }),
-    z.object({
-      $type: z.literal("response"),
-      data: z.discriminatedUnion("$type", [
-        z.object({ $type: z.literal("ack"), id: z.string() }),
-        z.object({
-          $type: z.literal("result"),
-          id: z.string(),
-          result: z.discriminatedUnion("$type", [
-            z.object({ $type: z.literal("string"), value: z.string() }),
-            z.object({ $type: z.literal("boolean"), value: z.boolean() }),
-            z.object({ $type: z.literal("float"), value: z.number() }),
-            z.object({
-              $type: z.literal("size"),
-              value: z.object({
-                height: z.number(),
-                scale_factor: z.number(),
-                width: z.number(),
-              }),
-            }),
-          ]),
-        }),
-        z.object({
-          $type: z.literal("err"),
-          id: z.string(),
-          message: z.string(),
-        }),
-      ]),
-    }),
   ],
 );
