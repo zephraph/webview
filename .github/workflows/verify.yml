@@ -8,10 +8,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Deno
-        uses: denoland/setup-deno@v1
+      - uses: jdx/mise-action@v2
         with:
-          deno-version: v1.x
+          experimental: true
 
       - name: Lint
         run: deno lint
@@ -21,10 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Deno
-        uses: denoland/setup-deno@v1
+      - uses: jdx/mise-action@v2
         with:
-          deno-version: v1.x
+          experimental: true
 
       - name: Passes publish checks
         run: deno publish --dry-run
@@ -34,10 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Deno
-        uses: denoland/setup-deno@v1
+      - uses: jdx/mise-action@v2
         with:
-          deno-version: v1.x
+          experimental: true
 
       - name: Run deno codegen
         run: deno task gen:deno
