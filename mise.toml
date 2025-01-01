@@ -33,3 +33,15 @@ depends = ["gen:deno", "build:rust"]
 
 [tasks.build]
 depends = ["build:*"]
+
+## Lint
+
+[tasks."lint:rust"]
+run = ["cargo fmt --check", "cargo clippy"]
+
+[tasks."lint:deno"]
+dir = "src"
+run = "deno lint"
+
+[tasks."lint"]
+depends = ["lint:*"]
