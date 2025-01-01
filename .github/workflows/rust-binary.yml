@@ -78,6 +78,8 @@ jobs:
           cache_key_prefix: mise-${{ matrix.target }}
           experimental: true
 
+      - run: mise x -- rustup target add ${{ matrix.target }}
+
       - name: Install libwebkit2gtk (Linux)
         if: matrix.target == 'x86_64-unknown-linux-gnu'
         run: |
