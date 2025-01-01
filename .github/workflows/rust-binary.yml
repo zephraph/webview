@@ -54,23 +54,28 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary_name: deno-webview-linux
+            platform: linux
           - os: ubuntu-latest
             target: x86_64-pc-windows-msvc
             binary_name: deno-webview-windows
+            platform: windows
           - os: macos-latest
             target: x86_64-apple-darwin
             binary_name: deno-webview-mac
+            platform: macos
           - os: macos-latest
             target: aarch64-apple-darwin
             binary_name: deno-webview-mac-arm64
-
+            platform: macos
     steps:
       - uses: actions/checkout@v4
 
       - uses: jdx/mise-action@v2
         env:
           RUSTUP_TARGET: ${{ matrix.target }}
+          MISE_ENV: ${{ matrix.platform }}
         with:
+          cache_key_prefix: mise-${{ matrix.target }}
           experimental: true
 
       - name: Install libwebkit2gtk (Linux)
@@ -78,25 +83,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev
-
-      - name: Get cargo-xwin version
-        if: matrix.target == 'x86_64-pc-windows-msvc'
-        id: cargo-xwin-version
-        run: |
-          VERSION=$(cargo search cargo-xwin --limit 1 | awk -F '"' '{print $2}')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Cache cargo-xwin
-        uses: actions/cache@v4
-        if: matrix.target == 'x86_64-pc-windows-msvc'
-        id: cache-cargo-xwin
-        with:
-          path: ~/.cargo/bin/cargo-xwin
-          key: ${{ runner.os }}-cargo-xwin-${{ steps.cargo-xwin-version.outputs.version }}-${{ hashFiles('rust-toolchain.toml') }}
-
-      - name: Install cargo-xwin (for Windows build)
-        if: matrix.target == 'x86_64-pc-windows-msvc' && steps.cache-cargo-xwin.outputs.cache-hit != 'true'
-        run: cargo install cargo-xwin
 
       - name: Set build flags
         id: build_flags
@@ -144,11 +130,13 @@ jobs:
 
       - name: Build (Windows)
         if: matrix.target == 'x86_64-pc-windows-msvc'
+        env:
+          MISE_ENV: windows
         run: |
-          cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mise x -- cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}.exe
 
-          cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mise x -- cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}-devtools.exe
 
       - name: Upload artifact
