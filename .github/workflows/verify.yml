@@ -47,5 +47,6 @@ jobs:
           if [[ -n $(git status --porcelain) ]]; then
             echo "Files have changed after running tests:"
             git status --porcelain
+            git diff
             exit 1
           fi
