@@ -41,6 +41,10 @@ depends = ["gen:rust"]
 [tasks."build:deno"]
 depends = ["gen:deno", "build:rust"]
 
+[tasks."build:python"]
+dir = "src/clients/python"
+run = "uv"
+
 [tasks.build]
 depends = ["build:*"]
 
