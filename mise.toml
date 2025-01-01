@@ -1,3 +1,35 @@
 [tools]
 deno = "2.1.4"
 rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy" }
+
+[settings]
+experimental = true
+
+[tasks.sync-versions]
+run = "deno run -A scripts/sync-versions.ts"
+
+## Gen
+
+[tasks."gen:rust"]
+run = "cargo run --bin generate_schemas"
+
+[tasks."gen:deno"]
+run = "deno run -A scripts/generate-schema.ts"
+depends = ["gen:rust"]
+sources = ["schemas/*", "scripts/generate-schema.ts"]
+outputs = ["src/clients/deno/schemas.ts"]
+
+[tasks.gen]
+depends = ["gen:*"]
+
+## Build
+
+[tasks."build:rust"]
+run = "cargo build -F transparent -F devtools"
+depends = ["gen:rust"]
+
+[tasks."build:deno"]
+depends = ["gen:deno", "build:rust"]
+
+[tasks.build]
+depends = ["build:*"]

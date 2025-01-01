@@ -50,7 +50,7 @@ enum WindowSize {
 /// Options for creating a webview.
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct WebViewOptions {
+pub struct WebViewOptions {
     /// Sets the title of the window.
     title: String,
     #[serde(flatten)]
@@ -134,7 +134,7 @@ fn default_origin() -> String {
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type", content = "data")]
-enum Message {
+pub enum Message {
     Notification(Notification),
     Response(Response),
 }
@@ -143,7 +143,7 @@ enum Message {
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
-enum Notification {
+pub enum Notification {
     Started {
         /// The version of the webview binary
         version: String,
@@ -159,7 +159,7 @@ enum Notification {
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
-enum Request {
+pub enum Request {
     GetVersion {
         /// The id of the request.
         id: String,
@@ -254,7 +254,7 @@ enum Request {
 #[derive(JsonSchema, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
-enum Response {
+pub enum Response {
     Ack { id: String },
     Result { id: String, result: ResultType },
     Err { id: String, message: String },
@@ -591,28 +591,4 @@ fn main() -> wry::Result<()> {
             _ => (),
         }
     });
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use schemars::schema_for;
-    use std::fs::File;
-    use std::io::Write;
-
-    #[test]
-    fn generate_json_schemas() {
-        let schemas = [
-            ("WebViewOptions", schema_for!(WebViewOptions)),
-            ("WebViewMessage", schema_for!(Message)),
-            ("WebViewRequest", schema_for!(Request)),
-            ("WebViewResponse", schema_for!(Response)),
-        ];
-
-        for (name, schema) in schemas {
-            let schema_json = serde_json::to_string_pretty(&schema).unwrap();
-            let mut file = File::create(format!("schemas/{}.json", name)).unwrap();
-            file.write_all(schema_json.as_bytes()).unwrap();
-        }
-    }
 }
