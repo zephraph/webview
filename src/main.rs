@@ -327,7 +327,7 @@ fn main() -> wry::Result<()> {
     let html_cell_init = html_cell.clone();
     let mut webview_builder = match webview_options.target {
         WebViewTarget::Url { url, headers } => {
-            let mut webview_builder = WebViewBuilder::new(&window).with_url(url);
+            let mut webview_builder = WebViewBuilder::new().with_url(url);
             if let Some(headers) = headers {
                 let headers = headers
                     .into_iter()
@@ -345,10 +345,10 @@ fn main() -> wry::Result<()> {
         WebViewTarget::Html { html, origin } => {
             origin_cell.replace(origin.clone());
             html_cell.replace(html);
-            WebViewBuilder::new(&window).with_url(&format!("load-html://{}", origin))
+            WebViewBuilder::new().with_url(&format!("load-html://{}", origin))
         }
     }
-    .with_custom_protocol("load-html".into(), move |_req| {
+    .with_custom_protocol("load-html".into(), move |_id, _req| {
         HttpResponse::builder()
             .header("Content-Type", "text/html")
             .body(Cow::Owned(
@@ -380,7 +380,7 @@ fn main() -> wry::Result<()> {
     if let Some(user_agent) = webview_options.user_agent {
         webview_builder = webview_builder.with_user_agent(user_agent.as_str());
     }
-    let webview = webview_builder.build()?;
+    let webview = webview_builder.build(&window)?;
 
     let notify_tx = tx.clone();
     let notify = move |notification: Notification| {
