@@ -1,9 +1,11 @@
 [tools]
+"aqua:astral-sh/uv" = "0.5.13"
 deno = "2.1.4"
 rust = { version = "1.78.0", postinstall = "mise run postinstall:rust" }
 
 [settings]
 experimental = true
+pipx.uvx = true
 
 [tasks."postinstall:rust"]
 run = ["rustup component add rustfmt clippy", """
