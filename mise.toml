@@ -85,8 +85,12 @@ outputs = ["target/debug/webview"]
 depends = ["gen:rust"]
 
 [tasks."build:deno"]
-description = "Run code gen and ensure the binary is built"
+description = "Run code gen for deno and ensure the binary is built"
 depends = ["gen:deno", "build:rust"]
+
+[tasks."build:python"]
+description = "Run code gen for python and ensure the binary is built"
+depends = ["gen:python", "build:rust"]
 
 [tasks.build]
 description = "Build all targets"
@@ -119,6 +123,13 @@ description = "Run all linting tasks"
 depends = ["lint:*"]
 
 ## Example
+
+[tasks."example:python"]
+description = "Run a python example"
+depends = ["build:python"]
+dir = "src/clients/python"
+run = "uv run examples/{{arg(name=\"example\")}}.py"
+env = { LOG_LEVEL = "debug", WEBVIEW_BIN = "../../../target/debug/webview" }
 
 [tasks."example:deno"]
 description = "Run a deno example"
