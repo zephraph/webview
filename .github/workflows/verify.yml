@@ -10,6 +10,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
         with:
+          cache_key_prefix: mise-{{hashFiles('mise.toml')}}
           experimental: true
 
       - name: Lint
@@ -34,6 +35,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
         with:
+          cache_key_prefix: mise-{{hashFiles('mise.toml')}}
           experimental: true
 
       - name: Run codegen

@@ -35,7 +35,7 @@ jobs:
           RUSTUP_TARGET: ${{ matrix.target }}
           MISE_ENV: ${{ matrix.platform }}
         with:
-          cache_key_prefix: mise-${{ matrix.target }}
+          cache_key_prefix: mise-${{ hashFiles('mise.toml') }}-${{ matrix.target }}
           experimental: true
 
       - run: mise x -- rustup target add ${{ matrix.target }}
