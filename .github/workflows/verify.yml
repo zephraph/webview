@@ -10,10 +10,11 @@ jobs:
 
       - uses: jdx/mise-action@v2
         with:
+          cache_key_prefix: mise-{{hashFiles('mise.toml')}}
           experimental: true
 
       - name: Lint
-        run: deno lint
+        run: mise lint
 
   publishable:
     runs-on: ubuntu-latest
@@ -34,10 +35,11 @@ jobs:
 
       - uses: jdx/mise-action@v2
         with:
+          cache_key_prefix: mise-{{hashFiles('mise.toml')}}
           experimental: true
 
-      - name: Run deno codegen
-        run: deno task gen:deno
+      - name: Run codegen
+        run: mise run gen
 
       - name: Check for changed files
         run: |

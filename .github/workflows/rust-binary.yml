@@ -4,47 +4,7 @@ on:
   push:
 
 jobs:
-  test:
-    name: Test
-    runs-on: macos-latest
-    permissions:
-      actions: write
-    outputs:
-      changed: ${{ steps.rust-changed.outputs.cache-hit }}
-    steps:
-      - uses: actions/checkout@v4
-
-      # This is a hack, it's just used to exit early if nothing has changed
-      - name: Check for changes to Rust files
-        uses: actions/cache@v4
-        id: rust-changed
-        with:
-          lookup-only: true
-          path: |
-            .gitignore
-          key: ${{ runner.os }}-rust-test-${{ hashFiles('.github/workflows/rust-binary.yml', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '**/*.rs') }}
-
-      - uses: jdx/mise-action@v2
-        if: steps.rust-changed.outputs.cache-hit != 'true'
-        with:
-          experimental: true
-
-      - name: Run cargo test
-        if: steps.rust-changed.outputs.cache-hit != 'true'
-        run: cargo test
-
-      - name: Check for changed files
-        if: steps.rust-changed.outputs.cache-hit != 'true'
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "Files have changed after running tests:"
-            git status --porcelain
-            exit 1
-          fi
-
   build:
-    needs: test
-    if: needs.test.outputs.changed != 'true'
     name: Build on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -75,16 +35,10 @@ jobs:
           RUSTUP_TARGET: ${{ matrix.target }}
           MISE_ENV: ${{ matrix.platform }}
         with:
-          cache_key_prefix: mise-${{ matrix.target }}
+          cache_key_prefix: mise-${{ hashFiles('mise.toml') }}-${{ matrix.target }}
           experimental: true
 
       - run: mise x -- rustup target add ${{ matrix.target }}
-
-      - name: Install libwebkit2gtk (Linux)
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev
 
       - name: Set build flags
         id: build_flags

@@ -1,3 +1,55 @@
 [tools]
 deno = "2.1.4"
-rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy" }
+rust = { version = "1.78.0", postinstall = "mise run postinstall:rust" }
+
+[settings]
+experimental = true
+
+[tasks."postinstall:rust"]
+run = ["rustup component add rustfmt clippy", """
+    {% if os() == "linux" and env.CI %}
+    sudo apt-get update
+    sudo apt-get install -y libwebkit2gtk-4.1-dev 
+    {% endif %}
+  """]
+
+[tasks.sync-versions]
+run = "deno run -A scripts/sync-versions.ts"
+
+## Gen
+
+[tasks."gen:rust"]
+run = "cargo run --bin generate_schemas"
+
+[tasks."gen:deno"]
+run = "deno run -A scripts/generate-schema.ts"
+depends = ["gen:rust"]
+sources = ["schemas/*", "scripts/generate-schema.ts"]
+outputs = ["src/clients/deno/schemas.ts"]
+
+[tasks.gen]
+depends = ["gen:*"]
+
+## Build
+
+[tasks."build:rust"]
+run = "cargo build -F transparent -F devtools"
+depends = ["gen:rust"]
+
+[tasks."build:deno"]
+depends = ["gen:deno", "build:rust"]
+
+[tasks.build]
+depends = ["build:*"]
+
+## Lint
+
+[tasks."lint:rust"]
+run = ["cargo fmt --check", "cargo clippy"]
+
+[tasks."lint:deno"]
+dir = "src"
+run = "deno lint"
+
+[tasks."lint"]
+depends = ["lint:*"]

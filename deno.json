@@ -3,10 +3,6 @@
   "exports": "./src/lib.ts",
   "version": "0.0.17",
   "tasks": {
-    "dev": "deno run --watch main.ts",
-    "gen": "deno task gen:rust && deno task gen:deno",
-    "gen:rust": "cargo build && cargo test",
-    "gen:deno": "deno run -A scripts/generate-schema.ts && deno run -A scripts/sync-versions.ts",
     "build": "deno task gen && cargo build -F transparent -F devtools",
     "example": "deno run -A scripts/example.ts"
   },
