@@ -1,0 +1,42 @@
+{
+  "version": "4",
+  "specifiers": {
+    "jsr:@std/fs@^1.0.3": "1.0.6",
+    "jsr:@std/path@^1.0.6": "1.0.8",
+    "jsr:@std/path@^1.0.8": "1.0.8",
+    "jsr:@std/ulid@1": "1.0.0",
+    "npm:type-fest@^4.26.1": "4.30.2",
+    "npm:zod@^3.23.8": "3.23.8"
+  },
+  "jsr": {
+    "@std/fs@1.0.6": {
+      "integrity": "42b56e1e41b75583a21d5a37f6a6a27de9f510bcd36c0c85791d685ca0b85fa2",
+      "dependencies": [
+        "jsr:@std/path@^1.0.8"
+      ]
+    },
+    "@std/path@1.0.8": {
+      "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
+    },
+    "@std/ulid@1.0.0": {
+      "integrity": "d41c3d27a907714413649fee864b7cde8d42ee68437d22b79d5de4f81d808780"
+    }
+  },
+  "npm": {
+    "type-fest@4.30.2": {
+      "integrity": "sha512-UJShLPYi1aWqCdq9HycOL/gwsuqda1OISdBO3t8RlXQC4QvtuIz4b5FCfe2dQIWEpmlRExKmcTBfP1r9bhY7ig=="
+    },
+    "zod@3.23.8": {
+      "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/fs@^1.0.3",
+      "jsr:@std/path@^1.0.6",
+      "jsr:@std/ulid@1",
+      "npm:type-fest@^4.26.1",
+      "npm:zod@^3.23.8"
+    ]
+  }
+}
