@@ -280,7 +280,33 @@ class WebView:
         self.process.wait()
 
 
-async def create_web_view(options: WebViewOptions) -> WebView:
+async def create_webview(
+    *,
+    title: str = None,
+    url: str = None,
+    html: str = None,
+    width: int = None,
+    height: int = None,
+    resizable: bool = None,
+    transparent: bool = None,
+    devtools: bool = None,
+    ipc: bool = None,
+) -> WebView:
+    options = {
+        k: v
+        for k, v in {
+            "title": title,
+            "url": url,
+            "html": html,
+            "width": width,
+            "height": height,
+            "resizable": resizable,
+            "transparent": transparent,
+            "devtools": devtools,
+            "ipc": ipc,
+        }.items()
+        if v is not None
+    }
     bin_path = await get_webview_bin(options)
     return WebView(options, bin_path)
 
@@ -292,7 +318,7 @@ async def main():
         "devtools": True,
     }
 
-    webview = await create_web_view(options)
+    webview = await create_webview(options)
 
     @webview.on("started")
     async def on_started():
