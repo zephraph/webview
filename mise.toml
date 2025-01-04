@@ -1,55 +1,80 @@
 [tools]
 deno = "2.1.4"
-rust = { version = "1.78.0", postinstall = "mise run postinstall:rust" }
+rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy" }
 
 [settings]
 experimental = true
 
-[tasks."postinstall:rust"]
-run = ["rustup component add rustfmt clippy", """
-    {% if os() == "linux" and env.CI %}
+[tasks."ci:install-deps"]
+description = "Install CI dependencies (only runs on CI)"
+run = """
+    {% if env.CI and os() == "linux" %}
     sudo apt-get update
     sudo apt-get install -y libwebkit2gtk-4.1-dev 
     {% endif %}
-  """]
+  """
 
 [tasks.sync-versions]
+description = "Update all version references"
 run = "deno run -A scripts/sync-versions.ts"
 
 ## Gen
 
 [tasks."gen:rust"]
+depends = ["ci:install-deps"]
+description = "Generate JSON schemas from the rust code"
 run = "cargo run --bin generate_schemas"
+sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
+outputs = ["schemas/*.json"]
 
 [tasks."gen:deno"]
+description = "Generate the deno client"
 run = "deno run -A scripts/generate-schema.ts"
 depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
 outputs = ["src/clients/deno/schemas.ts"]
 
 [tasks.gen]
+description = "Run all code gen tasks"
 depends = ["gen:*"]
 
 ## Build
 
 [tasks."build:rust"]
+description = "Build the webview binary"
 run = "cargo build -F transparent -F devtools"
+sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
+outputs = ["target/debug/deno-webview"]
 depends = ["gen:rust"]
 
 [tasks."build:deno"]
+description = "Run code gen and ensure the binary is built"
 depends = ["gen:deno", "build:rust"]
 
 [tasks.build]
+description = "Build all targets"
 depends = ["build:*"]
 
 ## Lint
 
 [tasks."lint:rust"]
+description = "Run clippy against rust code"
+depends = ["ci:install-deps"]
 run = ["cargo fmt --check", "cargo clippy"]
 
 [tasks."lint:deno"]
+description = "Run deno lint"
 dir = "src"
 run = "deno lint"
 
 [tasks."lint"]
+description = "Run all linting tasks"
 depends = ["lint:*"]
+
+## Example
+
+[tasks."example:deno"]
+description = "Run a deno example"
+depends = ["build:deno"]
+env = { WEBVIEW_BIN = "target/debug/deno-webview" }
+run = "deno run -E -R --allow-run examples/{{arg(name=\"example\")}}.ts"

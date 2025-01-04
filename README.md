@@ -64,3 +64,10 @@ the binary resolution process in favor of the path specified. In this case there
 - Run <WEBVIEW_BIN>
 
 Note that this environment variable will never be _explicitly_ requested. If the script detects it's not allowed to read this env var it just skips this code path altogether.
+
+## Contributing
+
+This project uses [mise](https://mise.jdx.dev/) to manage runtimes (like deno, rust) and run scripts. If you'd like
+to contribute, you'll need to install it. 
+
+Use the `mise tasks` command to see what you can do. 

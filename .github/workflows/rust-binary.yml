@@ -39,6 +39,8 @@ jobs:
           experimental: true
 
       - run: mise x -- rustup target add ${{ matrix.target }}
+      - run: mise run ci:install-deps
+
 
       - name: Set build flags
         id: build_flags
