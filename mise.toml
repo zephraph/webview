@@ -20,6 +20,8 @@ run = "deno run -A scripts/sync-versions.ts"
 
 [tasks."gen:rust"]
 run = "cargo run --bin generate_schemas"
+sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
+outputs = ["schemas/*.json"]
 
 [tasks."gen:deno"]
 run = "deno run -A scripts/generate-schema.ts"
@@ -34,6 +36,8 @@ depends = ["gen:*"]
 
 [tasks."build:rust"]
 run = "cargo build -F transparent -F devtools"
+sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
+outputs = ["target/debug/deno-webview"]
 depends = ["gen:rust"]
 
 [tasks."build:deno"]
