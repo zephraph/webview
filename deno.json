@@ -2,10 +2,6 @@
   "name": "@justbe/webview",
   "exports": "./src/lib.ts",
   "version": "0.0.17",
-  "tasks": {
-    "build": "deno task gen && cargo build -F transparent -F devtools",
-    "example": "deno run -A scripts/example.ts"
-  },
   "publish": {
     "include": ["README.md", "LICENSE", "src/**/*.ts"]
   },
