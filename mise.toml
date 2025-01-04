@@ -53,3 +53,11 @@ run = "deno lint"
 
 [tasks."lint"]
 depends = ["lint:*"]
+
+## Example
+
+[tasks."example:deno"]
+description = "Run a deno example"
+depends = ["build:deno"]
+env = { WEBVIEW_BIN = "target/debug/deno-webview" }
+run = "deno run -E -R --allow-run examples/{{arg(name=\"example\")}}.ts"
