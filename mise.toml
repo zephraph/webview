@@ -29,7 +29,7 @@ outputs = ["schemas/*.json"]
 
 [tasks."gen:deno"]
 description = "Generate the deno client"
-run = "deno run -A scripts/generate-schema.ts"
+run = "deno run -A scripts/generate-schema/index.ts --language typescript"
 depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
 outputs = ["src/clients/deno/schemas.ts"]
