@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals, assertThrows } from "jsr:@std/assert";
 import { parseSchema } from "./parser.ts";
 import type { JSONSchema } from "../../json-schema.d.ts";
 
@@ -244,5 +244,117 @@ Deno.test("parses references", () => {
         },
       },
     },
+  );
+});
+
+Deno.test("sorts definitions topologically", () => {
+  assertEquals(
+    parseSchema(makeSchema({
+      definitions: {
+        Container: {
+          type: "object",
+          properties: {
+            point: { $ref: "#/definitions/Point" },
+            size: { $ref: "#/definitions/Size" },
+          },
+        },
+        Size: {
+          type: "object",
+          properties: {
+            width: { type: "integer" },
+            height: { type: "integer" },
+          },
+        },
+        Point: {
+          type: "object",
+          properties: {
+            x: { type: "integer" },
+            y: { type: "integer" },
+          },
+        },
+      },
+      $ref: "#/definitions/Container",
+    })),
+    {
+      type: "doc",
+      title: "Test",
+      root: {
+        type: "reference",
+        name: "Container",
+      },
+      definitions: {
+        // Point and Size should come before Container since Container depends on them
+        Point: {
+          type: "object",
+          properties: [
+            {
+              key: "x",
+              required: false,
+              value: { type: "int" },
+            },
+            {
+              key: "y",
+              required: false,
+              value: { type: "int" },
+            },
+          ],
+        },
+        Size: {
+          type: "object",
+          properties: [
+            {
+              key: "width",
+              required: false,
+              value: { type: "int" },
+            },
+            {
+              key: "height",
+              required: false,
+              value: { type: "int" },
+            },
+          ],
+        },
+        Container: {
+          type: "object",
+          properties: [
+            {
+              key: "point",
+              required: false,
+              value: { type: "reference", name: "Point" },
+            },
+            {
+              key: "size",
+              required: false,
+              value: { type: "reference", name: "Size" },
+            },
+          ],
+        },
+      },
+    },
+  );
+});
+
+Deno.test("detects circular references", () => {
+  assertThrows(
+    () =>
+      parseSchema(makeSchema({
+        definitions: {
+          A: {
+            type: "object",
+            properties: {
+              b: { $ref: "#/definitions/B" },
+            },
+          },
+          B: {
+            type: "object",
+            properties: {
+              a: { $ref: "#/definitions/A" },
+            },
+          },
+        },
+        $ref: "#/definitions/A",
+      })),
+    Error,
+    "Circular reference detected",
   );
 });

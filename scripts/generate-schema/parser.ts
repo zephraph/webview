@@ -41,6 +41,107 @@ export type Node =
   | { type: "float"; minimum?: number; maximum?: number }
   | { type: "unknown" };
 
+// Find all references in a node recursively
+function findReferences(node: Node): Set<string> {
+  const refs = new Set<string>();
+
+  if (node.type === "reference") {
+    refs.add(node.name);
+  } else if (
+    node.type === "descriminated-union" || node.type === "union" ||
+    node.type === "intersection"
+  ) {
+    for (const member of node.members) {
+      for (const ref of findReferences(member)) {
+        refs.add(ref);
+      }
+    }
+  } else if (node.type === "object") {
+    for (const prop of node.properties) {
+      for (const ref of findReferences(prop.value)) {
+        refs.add(ref);
+      }
+    }
+  }
+
+  return refs;
+}
+
+// Detect cycles in the dependency graph
+function detectCycle(
+  graph: Map<string, Set<string>>,
+  node: string,
+  visited: Set<string>,
+  path: Set<string>,
+): string[] | null {
+  if (path.has(node)) {
+    const cycle = Array.from(path);
+    const startIdx = cycle.indexOf(node);
+    return cycle.slice(startIdx).concat(node);
+  }
+
+  if (visited.has(node)) return null;
+
+  visited.add(node);
+  path.add(node);
+
+  const deps = graph.get(node) || new Set();
+  for (const dep of deps) {
+    const cycle = detectCycle(graph, dep, visited, path);
+    if (cycle) return cycle;
+  }
+
+  path.delete(node);
+  return null;
+}
+
+// Sort definitions topologically
+function sortDefinitions(
+  definitions: Record<string, Node & { description?: string }>,
+): Record<string, Node & { description?: string }> {
+  // Build dependency graph
+  const graph = new Map<string, Set<string>>();
+  for (const [name, def] of Object.entries(definitions)) {
+    graph.set(name, findReferences(def));
+  }
+
+  // Check for cycles
+  const cycle = detectCycle(
+    graph,
+    Object.keys(definitions)[0],
+    new Set(),
+    new Set(),
+  );
+  if (cycle) {
+    throw new Error(`Circular reference detected: ${cycle.join(" -> ")}`);
+  }
+
+  // Topological sort
+  const sorted: string[] = [];
+  const visited = new Set<string>();
+
+  function visit(name: string) {
+    if (visited.has(name)) return;
+    visited.add(name);
+
+    const deps = graph.get(name) || new Set();
+    for (const dep of deps) {
+      visit(dep);
+    }
+
+    sorted.push(name);
+  }
+
+  for (const name of Object.keys(definitions)) {
+    visit(name);
+  }
+
+  // Reconstruct definitions object in sorted order
+  return Object.fromEntries(
+    sorted.map((name) => [name, definitions[name]]),
+  );
+}
+
 export const isComplexType = (node: Node) => {
   return node.type === "descriminated-union" || node.type === "union" ||
     node.type === "intersection" || node.type === "object";
@@ -211,20 +312,23 @@ export function parseSchema(schema: JSONSchema): Doc {
       )
       .otherwise(() => ({ type: "unknown" }));
   };
+
+  const definitions = Object.fromEntries(
+    Object.entries(schema.definitions ?? {}).map((
+      [name, type],
+    ) => [name, {
+      ...(typeof type === "object" && "description" in type && {
+        description: type.description,
+      }),
+      ...nodeToIR(type as JSONSchema),
+    }]),
+  ) ?? {};
+
   return {
     type: "doc",
     title: schema.title!,
     ...(schema.description && { description: schema.description }),
     root: nodeToIR(schema),
-    definitions: Object.fromEntries(
-      Object.entries(schema.definitions ?? {}).map((
-        [name, type],
-      ) => [name, {
-        ...(typeof type === "object" && "description" in type && {
-          description: type.description,
-        }),
-        ...nodeToIR(type as JSONSchema),
-      }]),
-    ) ?? {},
+    definitions: sortDefinitions(definitions),
   };
 }
