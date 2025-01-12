@@ -13,36 +13,33 @@ export interface Doc {
   title: string;
   description?: string;
   root: Node;
+  definitions: Record<string, Node & { description?: string }>;
 }
 export type Node =
-  & { description?: string }
-  & (
-    | {
-      type: "descriminated-union";
-      name?: string;
-      descriminator: string;
-      members: Node[];
-    }
-    | { type: "intersection"; name?: string; members: Node[] }
-    | { type: "union"; name?: string; members: Node[] }
-    | {
-      type: "object";
-      name?: string;
-      properties: {
-        key: string;
-        required: boolean;
-        description?: string;
-        value: Node;
-      }[];
-    }
-    | { type: "record"; name?: string; valueType: string }
-    | { type: "boolean"; name?: string; optional?: boolean }
-    | { type: "string"; name?: string; optional?: boolean }
-    | { type: "literal"; name?: string; value: string }
-    | { type: "int"; name?: string; minimum?: number; maximum?: number }
-    | { type: "float"; name?: string; minimum?: number; maximum?: number }
-    | { type: "unknown"; name?: string }
-  );
+  | { type: "reference"; name: string }
+  | {
+    type: "descriminated-union";
+    descriminator: string;
+    members: Node[];
+  }
+  | { type: "intersection"; members: Node[] }
+  | { type: "union"; members: Node[] }
+  | {
+    type: "object";
+    properties: {
+      key: string;
+      required: boolean;
+      description?: string;
+      value: Node;
+    }[];
+  }
+  | { type: "record"; valueType: string }
+  | { type: "boolean"; optional?: boolean }
+  | { type: "string"; optional?: boolean }
+  | { type: "literal"; value: string }
+  | { type: "int"; minimum?: number; maximum?: number }
+  | { type: "float"; minimum?: number; maximum?: number }
+  | { type: "unknown" };
 
 export const isComplexType = (node: Node) => {
   return node.type === "descriminated-union" || node.type === "union" ||
@@ -73,6 +70,10 @@ const flattenUnion = (union: Node[], member: Node) => {
 export function parseSchema(schema: JSONSchema): Doc {
   const nodeToIR = (node: JSONSchema): Node => {
     return match(node)
+      .with({ $ref: P.string }, (node) => ({
+        type: "reference" as const,
+        name: node.$ref.split("/").pop()!,
+      }))
       .with(
         {
           type: P.union("boolean", P.when(isOptionalType("boolean"))),
@@ -85,13 +86,13 @@ export function parseSchema(schema: JSONSchema): Doc {
       )
       .with({ type: "integer" }, (node) => ({
         type: "int" as const,
-        minimum: node.minimum,
-        maximum: node.maximum,
+        ...(node.minimum !== undefined && { minimum: node.minimum }),
+        ...(node.maximum !== undefined && { maximum: node.maximum }),
       }))
       .with({ type: "number", format: "double" }, (node) => ({
         type: "float" as const,
-        minimum: node.minimum,
-        maximum: node.maximum,
+        ...(node.minimum !== undefined && { minimum: node.minimum }),
+        ...(node.maximum !== undefined && { maximum: node.maximum }),
       }))
       .with(
         { type: P.union("string", P.when(isOptionalType("string"))) },
@@ -103,12 +104,10 @@ export function parseSchema(schema: JSONSchema): Doc {
               return {
                 type: "literal" as const,
                 value: node.enum[0] as string,
-                name: node.title,
               };
             }
             return {
               type: "union" as const,
-              name: node.title,
               members: node.enum.map((v) => ({
                 type: "literal" as const,
                 value: v as string,
@@ -117,7 +116,6 @@ export function parseSchema(schema: JSONSchema): Doc {
           }
           return ({
             type: "string" as const,
-            name: node.title,
             optional: !!node.default || isOptional,
           });
         },
@@ -126,17 +124,9 @@ export function parseSchema(schema: JSONSchema): Doc {
         { oneOf: P.when(isDescriminatedUnion) },
         (node) => ({
           type: "descriminated-union" as const,
-          name: node.title,
           descriminator: (node.oneOf?.[0] as JSONSchema).required?.[0]!,
           members: node.oneOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [],
         }),
-      )
-      .with(
-        { $ref: P.string },
-        (node) =>
-          nodeToIR(
-            schema.definitions![node.$ref.split("/").pop()!] as JSONSchema,
-          ),
       )
       .with({ allOf: P.array() }, (node) => {
         if (node.allOf?.length === 1) {
@@ -144,7 +134,6 @@ export function parseSchema(schema: JSONSchema): Doc {
         }
         return {
           type: "intersection" as const,
-          name: node.title,
           members: node.allOf?.map((v) => nodeToIR(v as JSONSchema)) ?? [],
         };
       })
@@ -153,7 +142,6 @@ export function parseSchema(schema: JSONSchema): Doc {
         (node) => {
           const union = {
             type: "union" as const,
-            name: node.title,
             members:
               ((node.oneOf ?? node.anyOf)?.map((v) =>
                 nodeToIR(v as JSONSchema)
@@ -164,7 +152,6 @@ export function parseSchema(schema: JSONSchema): Doc {
           if (node.properties) {
             return ({
               type: "intersection" as const,
-              name: node.title,
               members: [
                 {
                   type: "object" as const,
@@ -173,11 +160,9 @@ export function parseSchema(schema: JSONSchema): Doc {
                   ) => ({
                     key,
                     required: node.required?.includes(key) ?? false,
-                    description: (value as JSONSchema).description,
-                    value: {
-                      ...nodeToIR(value as JSONSchema),
-                      name: key,
-                    },
+                    ...(typeof value === "object" && value.description &&
+                      { description: value.description }),
+                    value: nodeToIR(value as JSONSchema),
                   })),
                 },
                 union,
@@ -197,8 +182,7 @@ export function parseSchema(schema: JSONSchema): Doc {
             ) {
               return {
                 type: "record" as const,
-                name: node.title,
-                description: node.description,
+                ...(node.description && { description: node.description }),
                 valueType: typeof node.additionalProperties.type === "string"
                   ? node.additionalProperties.type
                   : "unknown",
@@ -206,35 +190,41 @@ export function parseSchema(schema: JSONSchema): Doc {
             }
             return {
               type: "record" as const,
-              name: node.title,
-              description: node.description,
+              ...(node.description && { description: node.description }),
               valueType: "unknown",
             };
           }
           return ({
             type: "object" as const,
-            name: node.title,
-            description: node.description,
+            ...(node.description && { description: node.description }),
             properties: Object.entries(node.properties ?? {}).map((
               [key, value],
             ) => ({
               key,
               required: node.required?.includes(key) ?? false,
-              description: (value as JSONSchema).description,
-              value: {
-                ...nodeToIR(value as JSONSchema),
-                name: key,
-              },
+              ...(typeof value === "object" && value.description &&
+                { description: value.description }),
+              value: nodeToIR(value as JSONSchema),
             })),
           });
         },
       )
-      .otherwise(() => ({ type: "unknown", name: node.title }));
+      .otherwise(() => ({ type: "unknown" }));
   };
   return {
     type: "doc",
     title: schema.title!,
-    description: schema.description,
+    ...(schema.description && { description: schema.description }),
     root: nodeToIR(schema),
+    definitions: Object.fromEntries(
+      Object.entries(schema.definitions ?? {}).map((
+        [name, type],
+      ) => [name, {
+        ...(typeof type === "object" && "description" in type && {
+          description: type.description,
+        }),
+        ...nodeToIR(type as JSONSchema),
+      }]),
+    ) ?? {},
   };
 }
