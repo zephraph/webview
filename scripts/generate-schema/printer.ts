@@ -1,11 +1,45 @@
 import { match } from "npm:ts-pattern";
 import { Doc, Node } from "./parser.ts";
-import { blue, bold, dimmed, green, mix, yellow } from "jsr:@coven/terminal";
+import {
+  blue,
+  bold,
+  dimmed,
+  type Formatter,
+  green,
+  mix,
+  yellow,
+} from "jsr:@coven/terminal";
 
 const comment = mix(yellow, dimmed);
 const string = green;
 const type = blue;
 const kind = bold;
+
+function wrapText(
+  text: string,
+  maxLength: number,
+  indent: string,
+  formatter?: Formatter,
+): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    if (currentLine.length + word.length + 1 <= maxLength) {
+      currentLine += (currentLine.length === 0 ? "" : " ") + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine.length > 0) {
+    lines.push(currentLine);
+  }
+  return lines
+    .map((line) => formatter ? formatter`${line}` : line)
+    .map((line, i) => i === 0 ? line : indent + line);
+}
 
 function printNodeIR(
   node: Node,
@@ -14,18 +48,9 @@ function printNodeIR(
 ): string {
   const marker = isLast ? "└── " : "├── ";
   const childPrefix = prefix + (isLast ? "    " : "│   ");
-  let result = "";
 
-  // Print description if present
-  if ("description" in node) {
-    result += prefix + marker + `[${node.description}]\n`;
-    result += prefix + marker;
-  } else {
-    result += prefix + marker;
-  }
-
-  return result + match(node)
-    .with({ type: "reference" }, ({ name }) => name)
+  return prefix + marker + match(node)
+    .with({ type: "reference" }, ({ name }) => kind`${name}\n`)
     .with({ type: "descriminated-union" }, ({ descriminator, members }) => {
       let output = kind`discriminated-union` + ` (by ${descriminator})\n`;
       Object.entries(members).forEach(([name, properties], index) => {
@@ -62,11 +87,18 @@ function printNodeIR(
     .with({ type: "object" }, ({ name, properties }) => {
       let output = kind`${name ?? "object"}\n`;
       properties.forEach(({ key, required, value, description }, index) => {
+        description = description?.split("\n")[0];
         const propDesc = `${key}${required ? "" : "?"}: `;
 
         if (description) {
-          output += childPrefix + "│   " +
-            comment`${description}\n`;
+          const wrappedDesc = wrapText(
+            description,
+            96,
+            childPrefix + "│   ",
+            comment,
+          )
+            .join("\n");
+          output += childPrefix + "│   " + `${wrappedDesc}\n`;
           output += childPrefix +
             (index === properties.length - 1 ? "└── " : "├── ");
         } else {
@@ -160,10 +192,28 @@ function printNodeIR(
 
 export function printDocIR(doc: Doc): string {
   let result = `${doc.title}\n`;
-  if (doc.description) {
-    result += "│   description: " +
-      comment`${doc.description.split("\n")[0]}\n`;
+  const description = doc.description?.split("\n")[0];
+  if (description) {
+    const wrappedDesc = wrapText(description, 96, "│   description: ", comment)
+      .join("\n");
+    result += "│   description: " + `${wrappedDesc}\n`;
   }
   result += printNodeIR(doc.root, "", true);
+  for (const [name, definition] of Object.entries(doc.definitions)) {
+    result += `${name}\n`;
+    const description = definition.description?.split("\n")[0];
+    if (description) {
+      const wrappedDesc = wrapText(
+        description,
+        96,
+        "│   description: ",
+        comment,
+      ).join(
+        "\n",
+      );
+      result += "│   description: " + `${wrappedDesc}\n`;
+    }
+    result += printNodeIR(definition, "", true);
+  }
   return result;
 }
