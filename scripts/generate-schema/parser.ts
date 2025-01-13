@@ -16,30 +16,36 @@ export interface Doc {
   definitions: Record<string, Node & { description?: string }>;
 }
 export type Node =
-  | { type: "reference"; name: string }
-  | {
-    type: "descriminated-union";
-    descriminator: string;
-    members: Node[];
-  }
-  | { type: "intersection"; members: Node[] }
-  | { type: "union"; members: Node[] }
-  | {
-    type: "object";
-    properties: {
-      key: string;
-      required: boolean;
-      description?: string;
-      value: Node;
-    }[];
-  }
-  | { type: "record"; valueType: string }
-  | { type: "boolean"; optional?: boolean }
-  | { type: "string"; optional?: boolean }
-  | { type: "literal"; value: string }
-  | { type: "int"; minimum?: number; maximum?: number }
-  | { type: "float"; minimum?: number; maximum?: number }
-  | { type: "unknown" };
+  & { name?: string; description?: string }
+  & (
+    | { type: "reference"; name: string }
+    | {
+      type: "descriminated-union";
+      name?: string;
+      descriminator: string;
+      members: Node[];
+    }
+    | { type: "intersection"; name?: string; members: Node[] }
+    | { type: "union"; name?: string; members: Node[] }
+    | {
+      type: "object";
+      name?: string;
+      properties: {
+        key: string;
+        required: boolean;
+        description?: string;
+        value: Node;
+      }[];
+    }
+    | { type: "enum"; members: string[] }
+    | { type: "record"; valueType: string }
+    | { type: "boolean"; optional?: boolean }
+    | { type: "string"; optional?: boolean }
+    | { type: "literal"; value: string }
+    | { type: "int"; minimum?: number; maximum?: number }
+    | { type: "float"; minimum?: number; maximum?: number }
+    | { type: "unknown" }
+  );
 
 // Find all references in a node recursively
 function findReferences(node: Node): Set<string> {
@@ -97,8 +103,8 @@ function detectCycle(
 
 // Sort definitions topologically
 function sortDefinitions(
-  definitions: Record<string, Node & { description?: string }>,
-): Record<string, Node & { description?: string }> {
+  definitions: Record<string, Node>,
+): Record<string, Node> {
   // Build dependency graph
   const graph = new Map<string, Set<string>>();
   for (const [name, def] of Object.entries(definitions)) {
@@ -138,7 +144,7 @@ function sortDefinitions(
 
   // Reconstruct definitions object in sorted order
   return Object.fromEntries(
-    sorted.map((name) => [name, definitions[name]]),
+    sorted.map((name) => [name, { ...definitions[name], name }]),
   );
 }
 
@@ -208,11 +214,8 @@ export function parseSchema(schema: JSONSchema): Doc {
               };
             }
             return {
-              type: "union" as const,
-              members: node.enum.map((v) => ({
-                type: "literal" as const,
-                value: v as string,
-              })),
+              type: "enum" as const,
+              members: node.enum as string[],
             };
           }
           return ({
@@ -241,6 +244,12 @@ export function parseSchema(schema: JSONSchema): Doc {
       .with(
         P.union({ oneOf: P.array() }, { anyOf: P.array() }),
         (node) => {
+          if (
+            node.anyOf && node.anyOf.length === 2 &&
+            typeof node.anyOf[1] === "object" && node.anyOf[1].type === "null"
+          ) {
+            return nodeToIR(node.anyOf[0] as JSONSchema);
+          }
           const union = {
             type: "union" as const,
             members:
@@ -302,7 +311,12 @@ export function parseSchema(schema: JSONSchema): Doc {
               [key, value],
             ) => ({
               key,
-              required: node.required?.includes(key) ?? false,
+              required: node.required?.includes(key) ||
+                typeof value == "object" && "anyOf" in value &&
+                  value.anyOf?.find((v) =>
+                    typeof v === "object" && v.type === "null"
+                  ) ||
+                false,
               ...(typeof value === "object" && value.description &&
                 { description: value.description }),
               value: nodeToIR(value as JSONSchema),
@@ -319,6 +333,7 @@ export function parseSchema(schema: JSONSchema): Doc {
     ) => [name, {
       ...(typeof type === "object" && "description" in type && {
         description: type.description,
+        name,
       }),
       ...nodeToIR(type as JSONSchema),
     }]),
@@ -328,7 +343,7 @@ export function parseSchema(schema: JSONSchema): Doc {
     type: "doc",
     title: schema.title!,
     ...(schema.description && { description: schema.description }),
-    root: nodeToIR(schema),
+    root: { ...nodeToIR(schema), name: schema.title! },
     definitions: sortDefinitions(definitions),
   };
 }
