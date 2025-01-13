@@ -23,7 +23,7 @@ Deno.test("parses primitive types", () => {
     {
       type: "doc",
       title: "Test",
-      root: { type: "string", optional: false },
+      root: { type: "string", optional: false, name: "Test" },
       definitions: {},
     },
   );
@@ -34,7 +34,7 @@ Deno.test("parses primitive types", () => {
     {
       type: "doc",
       title: "Test",
-      root: { type: "boolean", optional: false },
+      root: { type: "boolean", optional: false, name: "Test" },
       definitions: {},
     },
   );
@@ -45,7 +45,7 @@ Deno.test("parses primitive types", () => {
     {
       type: "doc",
       title: "Test",
-      root: { type: "int", minimum: 0, maximum: 100 },
+      root: { type: "int", minimum: 0, maximum: 100, name: "Test" },
       definitions: {},
     },
   );
@@ -56,7 +56,7 @@ Deno.test("parses primitive types", () => {
     {
       type: "doc",
       title: "Test",
-      root: { type: "float" },
+      root: { type: "float", name: "Test" },
       definitions: {},
     },
   );
@@ -69,7 +69,7 @@ Deno.test("parses string enums", () => {
     {
       type: "doc",
       title: "Test",
-      root: { type: "literal", value: "test" },
+      root: { type: "literal", value: "test", name: "Test" },
       definitions: {},
     },
   );
@@ -81,11 +81,9 @@ Deno.test("parses string enums", () => {
       type: "doc",
       title: "Test",
       root: {
-        type: "union",
-        members: [
-          { type: "literal", value: "a" },
-          { type: "literal", value: "b" },
-        ],
+        type: "enum",
+        name: "Test",
+        members: ["a", "b"],
       },
       definitions: {},
     },
@@ -106,6 +104,7 @@ Deno.test("parses simple objects", () => {
       type: "doc",
       title: "Test",
       root: {
+        name: "Test",
         type: "object",
         properties: [
           {
@@ -153,42 +152,21 @@ Deno.test("parses discriminated unions", () => {
       type: "doc",
       title: "Test",
       root: {
+        name: "Test",
         type: "descriminated-union",
         descriminator: "$type",
-        members: [
-          {
-            type: "object",
-            properties: [
-              {
-                key: "$type",
-                required: true,
-                value: { type: "literal", value: "a" },
-              },
-              {
-                key: "value",
-                required: false,
-                value: { type: "string", optional: false },
-              },
-            ],
-          },
-          {
-            type: "object",
-            properties: [
-              {
-                key: "$type",
-                required: true,
-                value: { type: "literal", value: "b" },
-              },
-              {
-                key: "count",
-                required: false,
-                value: {
-                  type: "int",
-                },
-              },
-            ],
-          },
-        ],
+        members: {
+          a: [{
+            value: { type: "string", optional: false },
+            required: false,
+            key: "value",
+          }],
+          b: [{
+            key: "count",
+            value: { type: "int" },
+            required: false,
+          }],
+        },
       },
       definitions: {},
     },
@@ -216,10 +194,11 @@ Deno.test("parses references", () => {
       title: "Test",
       root: {
         type: "reference",
-        name: "Point",
+        name: "Test",
       },
       definitions: {
         Point: {
+          name: "Point",
           description: "A point in 2D space",
           type: "object",
           properties: [
@@ -280,11 +259,12 @@ Deno.test("sorts definitions topologically", () => {
       title: "Test",
       root: {
         type: "reference",
-        name: "Container",
+        name: "Test",
       },
       definitions: {
         // Point and Size should come before Container since Container depends on them
         Point: {
+          name: "Point",
           type: "object",
           properties: [
             {
@@ -300,6 +280,7 @@ Deno.test("sorts definitions topologically", () => {
           ],
         },
         Size: {
+          name: "Size",
           type: "object",
           properties: [
             {
@@ -315,6 +296,7 @@ Deno.test("sorts definitions topologically", () => {
           ],
         },
         Container: {
+          name: "Container",
           type: "object",
           properties: [
             {

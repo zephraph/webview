@@ -44,10 +44,10 @@ function generateTypes(doc: Doc, typeName: string) {
   function generateNode(node: Node) {
     match(node)
       .with({ type: "reference" }, (node) => w(node.name))
-      .with({ type: "int" }, (node) => w("number"))
-      .with({ type: "float" }, (node) => w("number"))
-      .with({ type: "boolean" }, (node) => w("boolean"))
-      .with({ type: "string" }, (node) => w("string"))
+      .with({ type: "int" }, () => w("number"))
+      .with({ type: "float" }, () => w("number"))
+      .with({ type: "boolean" }, () => w("boolean"))
+      .with({ type: "string" }, () => w("string"))
       .with({ type: "literal" }, (node) => w(`"${node.value}"`))
       .with(
         { type: "record" },
@@ -93,11 +93,16 @@ function generateTypes(doc: Doc, typeName: string) {
       })
       .with({ type: "descriminated-union" }, (node) => {
         wn("(");
-        for (const member of node.members) {
-          generateNode(member);
-          if (member !== node.members.at(-1)) {
-            w(" | ");
+        for (const [name, member] of Object.entries(node.members)) {
+          wn("| {");
+          wn(`${node.descriminator}: "${name}",`);
+          for (const { key, required, description, value } of member) {
+            wn(description ? `/** ${description} */` : "");
+            w(key, required ? ": " : "? : ");
+            generateNode(value);
+            wn(",");
           }
+          wn("}");
         }
         wn(")");
       })
@@ -174,9 +179,17 @@ export function generateZodSchema(doc: Doc, name: string) {
       })
       .with({ type: "descriminated-union" }, (node) => {
         w(`z.discriminatedUnion("${node.descriminator}", [`);
-        for (const member of node.members) {
-          generateNode(member);
-          w(",");
+        for (const [name, member] of Object.entries(node.members)) {
+          w(`z.object({ ${node.descriminator}: z.literal("${name}"),`);
+          for (const { key, required, value } of member) {
+            w(key, ": ");
+            generateNode(value);
+            if (!required) {
+              w(".optional()");
+            }
+            wn(",");
+          }
+          wn("}),");
         }
         wn("])");
       })
