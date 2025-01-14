@@ -1,11 +1,7 @@
 import { walk } from "https://deno.land/std@0.190.0/fs/walk.ts";
 import { basename } from "https://deno.land/std@0.190.0/path/mod.ts";
 import { match, P } from "npm:ts-pattern";
-import type {
-  JSONSchema7 as JSONSchema,
-  JSONSchema7Definition as JSONSchemaDefinition,
-  JSONSchema7TypeName,
-} from "npm:@types/json-schema";
+import type { JSONSchema, JSONSchemaTypeName } from "../json-schema.d.ts";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
 const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
@@ -42,14 +38,14 @@ type NodeIR =
   | { type: "float"; minimum?: number; maximum?: number }
   | { type: "unknown" };
 
-const isDescriminatedUnion = (def: JSONSchemaDefinition[] | undefined) => {
+const isDescriminatedUnion = (def: JSONSchema[] | undefined) => {
   return def && typeof def[0] === "object" &&
     (def[0]?.required?.[0] + "").startsWith("$");
 };
 
 const isOptionalType =
   (typeOf: string) =>
-  (type: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined) => {
+  (type: JSONSchemaTypeName | JSONSchemaTypeName[] | undefined) => {
     if (type && Array.isArray(type) && type[0] === typeOf) {
       return true;
     }
