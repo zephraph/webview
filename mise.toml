@@ -1,5 +1,5 @@
 [tools]
-deno = "2.1.5"
+deno = "2.1.6"
 rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy" }
 
 [settings]
