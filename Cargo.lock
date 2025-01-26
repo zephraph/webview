@@ -2279,6 +2279,7 @@ dependencies = [
 name = "webview"
 version = "0.1.14"
 dependencies = [
+ "parking_lot",
  "schemars",
  "serde",
  "serde_json",

@@ -1,5 +1,5 @@
+use parking_lot::Mutex;
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::env;
 use std::io::{self, BufRead, Write};
@@ -291,11 +291,11 @@ impl From<bool> for ResultType {
 }
 
 pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
-    // These two cells are used to store the html and origin if the webview is created with html.
-    // The html cell is needed to provide a value to the custom protocol and origin is needed
+    // These two mutexes are used to store the html and origin if the webview is created with html.
+    // The html mutex is needed to provide a value to the custom protocol and origin is needed
     // as a fallback if `load_html` is called without an origin.
-    let html_cell = Arc::new(RefCell::new("".to_string()));
-    let origin_cell = Arc::new(RefCell::new(default_origin().to_string()));
+    let html_mutex = Arc::new(Mutex::new("".to_string()));
+    let origin_mutex = Arc::new(Mutex::new(default_origin().to_string()));
 
     let (tx, to_deno) = mpsc::channel::<Message>();
     let (from_deno, rx) = mpsc::channel::<Request>();
@@ -320,7 +320,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
     }
     let window = window_builder.build(&event_loop).unwrap();
 
-    let html_cell_init = html_cell.clone();
+    let html_mutex_init = html_mutex.clone();
     let mut webview_builder = match webview_options.target {
         WebViewTarget::Url { url, headers } => {
             let mut webview_builder = WebViewBuilder::new().with_url(url);
@@ -339,17 +339,15 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
             webview_builder
         }
         WebViewTarget::Html { html, origin } => {
-            origin_cell.replace(origin.clone());
-            html_cell.replace(html);
+            *origin_mutex.lock() = origin.clone();
+            *html_mutex.lock() = html;
             WebViewBuilder::new().with_url(&format!("load-html://{}", origin))
         }
     }
     .with_custom_protocol("load-html".into(), move |_id, _req| {
         HttpResponse::builder()
             .header("Content-Type", "text/html")
-            .body(Cow::Owned(
-                html_cell_init.as_ref().borrow().as_bytes().to_vec(),
-            ))
+            .body(Cow::Owned(html_mutex_init.lock().as_bytes().to_vec()))
             .unwrap()
     })
     .with_transparent(webview_options.transparent)
@@ -521,7 +519,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
                             res(Response::Ack { id });
                         }
                         Request::Fullscreen { id, fullscreen } => {
-                            let fullscreen = fullscreen.unwrap_or(!window.fullscreen().is_some());
+                            let fullscreen = fullscreen.unwrap_or(window.fullscreen().is_none());
                             eprintln!("Fullscreen: {:?}", fullscreen);
                             if fullscreen {
                                 window.set_fullscreen(Some(Fullscreen::Borderless(None)));
@@ -543,13 +541,13 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
                             res(Response::Ack { id });
                         }
                         Request::LoadHtml { id, html, origin } => {
-                            html_cell.replace(html);
+                            *html_mutex.lock() = html;
                             let origin = match origin {
                                 Some(origin) => {
-                                    origin_cell.replace(origin.clone());
+                                    *origin_mutex.lock() = origin.clone();
                                     origin
                                 }
-                                None => origin_cell.borrow().clone(),
+                                None => origin_mutex.lock().clone(),
                             };
 
                             webview
