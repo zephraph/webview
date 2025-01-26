@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "0.0.17",
   "publish": {
-    "include": ["README.md", "LICENSE", "*.ts"]
+    "include": ["README.md", "LICENSE", "*.ts", "schemas/*.ts"]
   },
   "imports": {
     "jsr:@std/fs": "jsr:@std/fs@^1.0.3",
