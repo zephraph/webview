@@ -9,7 +9,6 @@ use std::sync::Arc;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
 
