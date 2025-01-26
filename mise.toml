@@ -36,6 +36,11 @@ depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
 outputs = ["src/clients/deno/schemas.ts"]
 
+[tasks."gen:python"]
+description = "Generate the python client"
+run = "deno run -A scripts/generate-schema/index.ts --language python"
+depends = ["gen:rust"]
+
 ## Debug
 
 [tasks."print-schema"]
