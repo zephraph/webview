@@ -1,6 +1,7 @@
 {
   "name": "@justbe/webview",
   "exports": "./main.ts",
+  "license": "MIT",
   "version": "0.0.17",
   "publish": {
     "include": ["README.md", "LICENSE", "*.ts"]
