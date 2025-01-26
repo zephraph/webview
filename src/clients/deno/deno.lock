@@ -30,6 +30,9 @@
       "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g=="
     }
   },
+  "remote": {
+    "https://deno.land/x/esbuild@v0.24.0/wasm.js": "5cd1dd0c40214d06bd86177b4ffebfbb219a22114f78c14c23606f7ad216c174"
+  },
   "workspace": {
     "dependencies": [
       "jsr:@std/fs@^1.0.3",
