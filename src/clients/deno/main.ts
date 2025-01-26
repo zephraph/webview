@@ -23,18 +23,16 @@
  */
 
 import { EventEmitter } from "node:events";
-import {
-  WebViewMessage,
-  type WebViewOptions,
-  type WebViewRequest,
-  WebViewResponse,
-} from "./schemas.ts";
+import { WebViewMessage } from "./schemas/WebViewMessage.ts";
+import type { WebViewOptions } from "./schemas/WebViewOptions.ts";
+import type { WebViewRequest } from "./schemas/WebViewRequest.ts";
+import { WebViewResponse } from "./schemas/WebViewResponse.ts";
 import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except, Simplify } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 
-export type { WebViewOptions } from "./schemas.ts";
+export type { WebViewOptions } from "./schemas/WebViewOptions.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
