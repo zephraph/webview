@@ -1,3 +1,4 @@
 /target
 _test*
 .DS_Store
+.vscode/mise-tools
