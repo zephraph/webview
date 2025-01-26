@@ -34,6 +34,13 @@ depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
 outputs = ["src/clients/deno/schemas.ts"]
 
+## Publishing
+
+[tasks."verify-publish:deno"]
+description = "Verify the deno client is pulishable"
+dir = "src/clients/deno"
+run = "deno publish --dry-run"
+
 [tasks.gen]
 description = "Run all code gen tasks"
 depends = ["gen:*"]
@@ -76,5 +83,6 @@ depends = ["lint:*"]
 [tasks."example:deno"]
 description = "Run a deno example"
 depends = ["build:deno"]
-env = { WEBVIEW_BIN = "target/debug/deno-webview" }
+env = { WEBVIEW_BIN = "../../../target/debug/deno-webview" }
 run = "deno run -E -R --allow-run examples/{{arg(name=\"example\")}}.ts"
+dir = "src/clients/deno"

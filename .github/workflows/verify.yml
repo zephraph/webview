@@ -26,7 +26,7 @@ jobs:
           experimental: true
 
       - name: Passes publish checks
-        run: deno publish --dry-run
+        run: mise run verify-publish:*
 
   codegen-up-to-date:
     runs-on: ubuntu-latest

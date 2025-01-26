@@ -4,7 +4,8 @@ import { match, P } from "npm:ts-pattern";
 import type { JSONSchema, JSONSchemaTypeName } from "../json-schema.d.ts";
 
 const schemasDir = new URL("../schemas", import.meta.url).pathname;
-const outputFile = new URL("../src/schemas.ts", import.meta.url).pathname;
+const outputFile =
+  new URL("../src/clients/deno/schemas.ts", import.meta.url).pathname;
 
 // defining an IR
 interface DocIR {

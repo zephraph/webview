@@ -10,7 +10,7 @@ const latestVersion = await Deno
   ).then((config) => config.package.version);
 
 // Read the content of src/lib.ts
-const libPath = "./src/lib.ts";
+const libPath = "./src/clients/deno/main.ts";
 const libContent = await Deno.readTextFile(libPath);
 
 // Replace the version in the URL
