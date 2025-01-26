@@ -5,5 +5,10 @@
   },
   "[json]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
-  }
+  },
+  "debug.javascript.defaultRuntimeExecutable": {
+    "pwa-node": "${workspaceFolder}/.vscode/mise-tools/node"
+  },
+  "deno.path": "${workspaceFolder}/.vscode/mise-tools/deno",
+  "mise.configureExtensionsUseSymLinks": true
 }
