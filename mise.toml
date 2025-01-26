@@ -34,6 +34,15 @@ depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
 outputs = ["src/clients/deno/schemas.ts"]
 
+## Debug
+
+[tasks."print-schema"]
+description = "Prints a simplified version of the schema"
+usage = '''
+arg "[schema]" help="The schema to print; prints all if not provided"
+'''
+run = "deno run -A scripts/generate-schema/debug.ts {{arg(name=\"schema\")}}"
+
 ## Publishing
 
 [tasks."verify-publish:deno"]
