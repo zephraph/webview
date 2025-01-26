@@ -1,7 +1,7 @@
-use deno_webview::{Message, Request, Response, WebViewOptions};
 use schemars::schema_for;
 use std::fs::File;
 use std::io::Write;
+use webview::{Message, Request, Response, WebViewOptions};
 
 fn main() {
     let schemas = [

@@ -26,7 +26,7 @@ jobs:
       - name: Check for artifacts
         id: check_artifacts
         run: |
-          if [ -z "$(find . -name 'deno-webview*')" ]; then
+          if [ -z "$(find . -name 'webview*')" ]; then
             echo "No artifacts found. Exiting successfully."
             echo "artifacts_found=false" >> $GITHUB_OUTPUT
           else
@@ -50,5 +50,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
           skipIfReleaseExists: true
-          artifacts: "release-binary-*/deno-webview*"
+          artifacts: "release-binary-*/webview*"
           artifactErrorsFailBuild: true

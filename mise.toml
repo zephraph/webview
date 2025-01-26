@@ -58,9 +58,9 @@ depends = ["gen:*"]
 
 [tasks."build:rust"]
 description = "Build the webview binary"
-run = "cargo build -F transparent -F devtools"
+run = "cargo build --bin webview -F transparent -F devtools"
 sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
-outputs = ["target/debug/deno-webview"]
+outputs = ["target/debug/webview"]
 depends = ["gen:rust"]
 
 [tasks."build:deno"]
@@ -92,6 +92,6 @@ depends = ["lint:*"]
 [tasks."example:deno"]
 description = "Run a deno example"
 depends = ["build:deno"]
-env = { WEBVIEW_BIN = "../../../target/debug/deno-webview" }
+env = { WEBVIEW_BIN = "../../../target/debug/webview" }
 run = "deno run -E -R -N --allow-run examples/{{arg(name=\"example\")}}.ts"
 dir = "src/clients/deno"

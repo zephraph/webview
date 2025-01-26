@@ -100,7 +100,7 @@ async function getWebViewBin(options: WebViewOptions) {
     : "";
 
   const cacheDir = getCacheDir();
-  const fileName = `deno-webview-${BIN_VERSION}${flags}${
+  const fileName = `webview-${BIN_VERSION}${flags}${
     Deno.build.os === "windows" ? ".exe" : ""
   }`;
   const filePath = join(cacheDir, fileName);
@@ -112,7 +112,7 @@ async function getWebViewBin(options: WebViewOptions) {
 
   // If not in cache, download it
   let url =
-    `https://github.com/zephraph/webview/releases/download/webview-v${BIN_VERSION}/deno-webview`;
+    `https://github.com/zephraph/webview/releases/download/webview-v${BIN_VERSION}/webview`;
   switch (Deno.build.os) {
     case "darwin": {
       url += "-mac" + (Deno.build.arch === "aarch64" ? "-arm64" : "") + flags;
@@ -147,11 +147,11 @@ async function getWebViewBin(options: WebViewOptions) {
 function getCacheDir(): string {
   switch (Deno.build.os) {
     case "darwin":
-      return join(Deno.env.get("HOME")!, "Library", "Caches", "deno-webview");
+      return join(Deno.env.get("HOME")!, "Library", "Caches", "webview");
     case "linux":
-      return join(Deno.env.get("HOME")!, ".cache", "deno-webview");
+      return join(Deno.env.get("HOME")!, ".cache", "webview");
     case "windows":
-      return join(Deno.env.get("LOCALAPPDATA")!, "deno-webview", "Cache");
+      return join(Deno.env.get("LOCALAPPDATA")!, "webview", "Cache");
     default:
       throw new Error("Unsupported OS");
   }

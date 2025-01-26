@@ -1,5 +1,5 @@
 [package]
-name = "deno-webview"
+name = "webview"
 version = "0.1.14"
 edition = "2021"
 

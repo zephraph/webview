@@ -296,17 +296,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deno-webview"
-version = "0.1.14"
-dependencies = [
- "schemars",
- "serde",
- "serde_json",
- "tao",
- "wry",
-]
-
-[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2284,6 +2273,17 @@ dependencies = [
  "pkg-config",
  "soup3-sys",
  "system-deps",
+]
+
+[[package]]
+name = "webview"
+version = "0.1.14"
+dependencies = [
+ "schemars",
+ "serde",
+ "serde_json",
+ "tao",
+ "wry",
 ]
 
 [[package]]
