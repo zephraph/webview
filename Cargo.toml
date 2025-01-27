@@ -1,5 +1,5 @@
 [package]
-name = "deno-webview"
+name = "webview"
 version = "0.1.14"
 edition = "2021"
 
@@ -15,6 +15,7 @@ serde_json = "1"
 tao = "0.31.0"
 wry = "0.48.0"
 schemars = "0.8.21"
+parking_lot = "0.12"
 
 [features]
 transparent = ["wry/transparent"]

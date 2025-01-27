@@ -13,19 +13,19 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            binary_name: deno-webview-linux
+            binary_name: webview-linux
             platform: linux
           - os: ubuntu-latest
             target: x86_64-pc-windows-msvc
-            binary_name: deno-webview-windows
+            binary_name: webview-windows
             platform: windows
           - os: macos-latest
             target: x86_64-apple-darwin
-            binary_name: deno-webview-mac
+            binary_name: webview-mac
             platform: macos
           - os: macos-latest
             target: aarch64-apple-darwin
-            binary_name: deno-webview-mac-arm64
+            binary_name: webview-mac-arm64
             platform: macos
     steps:
       - uses: actions/checkout@v4
@@ -56,46 +56,46 @@ jobs:
       - name: Build Linux
         if: matrix.target == 'x86_64-unknown-linux-gnu'
         run: |
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
+          mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}
 
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-devtools
+          mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-devtools
 
       - name: Build macOS x86_64
         if: matrix.target == 'x86_64-apple-darwin'
         run: |
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
+          mise run build:rust ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}
 
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-transparent
+          mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-transparent
 
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-devtools
+          mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-devtools
 
       - name: Build (aarch64-apple-darwin)
         if: matrix.target == 'aarch64-apple-darwin'
         run: |
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) mise run build:rust ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}
 
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-transparent
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-transparent
 
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview ${{ matrix.binary_name }}-devtools
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-devtools
 
       - name: Build (Windows)
         if: matrix.target == 'x86_64-pc-windows-msvc'
         env:
           MISE_ENV: windows
         run: |
-          mise x -- cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}.exe
+          mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview.exe ${{ matrix.binary_name }}.exe
 
-          mise x -- cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
-          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/deno-webview.exe ${{ matrix.binary_name }}-devtools.exe
+          mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview.exe ${{ matrix.binary_name }}-devtools.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
