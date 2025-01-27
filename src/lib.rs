@@ -52,8 +52,8 @@ pub enum WindowSize {
 pub struct WebViewOptions {
     /// Sets the title of the window.
     title: String,
-    #[serde(flatten)]
-    target: WebViewTarget,
+    /// The content to load into the webview.
+    load: WebViewContent,
     /// The size of the window.
     #[serde(default)]
     size: Option<WindowSize>,
@@ -103,10 +103,11 @@ fn default_true() -> bool {
     true
 }
 
+/// The content to load into the webview.
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(untagged)]
-pub enum WebViewTarget {
+pub enum WebViewContent {
     Url {
         /// Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.
         url: String,
@@ -321,8 +322,8 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
     let window = window_builder.build(&event_loop).unwrap();
 
     let html_mutex_init = html_mutex.clone();
-    let mut webview_builder = match webview_options.target {
-        WebViewTarget::Url { url, headers } => {
+    let mut webview_builder = match webview_options.load {
+        WebViewContent::Url { url, headers } => {
             let mut webview_builder = WebViewBuilder::new().with_url(url);
             if let Some(headers) = headers {
                 let headers = headers
@@ -338,7 +339,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
             }
             webview_builder
         }
-        WebViewTarget::Html { html, origin } => {
+        WebViewContent::Html { html, origin } => {
             *origin_mutex.lock() = origin.clone();
             *html_mutex.lock() = html;
             WebViewBuilder::new().with_url(&format!("load-html://{}", origin))

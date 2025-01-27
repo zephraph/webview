@@ -3,48 +3,8 @@
   "title": "WebViewOptions",
   "description": "Options for creating a webview.",
   "type": "object",
-  "anyOf": [
-    {
-      "type": "object",
-      "required": [
-        "url"
-      ],
-      "properties": {
-        "headers": {
-          "description": "Optional headers to send with the request.",
-          "type": [
-            "object",
-            "null"
-          ],
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "url": {
-          "description": "Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.",
-          "type": "string"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "html"
-      ],
-      "properties": {
-        "html": {
-          "description": "Html to load in the webview.",
-          "type": "string"
-        },
-        "origin": {
-          "description": "What to set as the origin of the webview when loading html.",
-          "default": "init",
-          "type": "string"
-        }
-      }
-    }
-  ],
   "required": [
+    "load",
     "title"
   ],
   "properties": {
@@ -96,6 +56,14 @@
       "default": false,
       "type": "boolean"
     },
+    "load": {
+      "description": "The content to load into the webview.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/WebViewContent"
+        }
+      ]
+    },
     "size": {
       "description": "The size of the window.",
       "anyOf": [
@@ -126,6 +94,50 @@
     }
   },
   "definitions": {
+    "WebViewContent": {
+      "description": "The content to load into the webview.",
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "url"
+          ],
+          "properties": {
+            "headers": {
+              "description": "Optional headers to send with the request.",
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "url": {
+              "description": "Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "html"
+          ],
+          "properties": {
+            "html": {
+              "description": "Html to load in the webview.",
+              "type": "string"
+            },
+            "origin": {
+              "description": "What to set as the origin of the webview when loading html.",
+              "default": "init",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
     "WindowSize": {
       "anyOf": [
         {

@@ -2,7 +2,8 @@ import { createWebView } from "../main.ts";
 
 using webview = await createWebView({
   title: "Window Size",
-  html: `
+  load: {
+    html: `
     <h1>Window Sizes</h1>
     <div style="display: flex; gap: 10px;">
       <button onclick="window.ipc.postMessage('maximize')">Maximize</button>
@@ -10,6 +11,7 @@ using webview = await createWebView({
       <button onclick="window.ipc.postMessage('fullscreen')">Fullscreen</button>
     </div>
   `,
+  },
   size: {
     height: 200,
     width: 800,

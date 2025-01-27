@@ -2,8 +2,10 @@ import { createWebView } from "../main.ts";
 
 using webview = await createWebView({
   title: "Simple",
-  html: "<h1>Hello, World!</h1>",
   devtools: true,
+  load: {
+    html: "<h1>Hello, World!</h1>",
+  },
   initializationScript:
     "console.log('This is printed from initializationScript!')",
 });
