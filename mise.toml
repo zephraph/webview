@@ -58,7 +58,7 @@ depends = ["gen:*"]
 
 [tasks."build:rust"]
 description = "Build the webview binary"
-run = "cargo build --bin webview -F transparent -F devtools"
+run = "cargo {% if get_env(name='MISE_ENV', default='') == 'windows' %}xwin{% endif %} build --bin webview"
 sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
 outputs = ["target/debug/webview"]
 depends = ["gen:rust"]

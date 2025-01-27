@@ -56,34 +56,34 @@ jobs:
       - name: Build Linux
         if: matrix.target == 'x86_64-unknown-linux-gnu'
         run: |
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}
 
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-devtools
 
       - name: Build macOS x86_64
         if: matrix.target == 'x86_64-apple-darwin'
         run: |
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          mise run build:rust ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}
 
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-transparent
 
-          cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-devtools
 
       - name: Build (aarch64-apple-darwin)
         if: matrix.target == 'aarch64-apple-darwin'
         run: |
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) mise run build:rust ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}
 
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-transparent
 
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) cargo build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview ${{ matrix.binary_name }}-devtools
 
       - name: Build (Windows)
@@ -91,10 +91,10 @@ jobs:
         env:
           MISE_ENV: windows
         run: |
-          mise x -- cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent
+          mise run build:rust -F transparent ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview.exe ${{ matrix.binary_name }}.exe
 
-          mise x -- cargo xwin build ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }} -F transparent -F devtools
+          mise run build:rust -F 'transparent devtools' ${{ steps.build_flags.outputs.flags }} --target ${{ matrix.target }}
           mv target/${{ matrix.target }}/${{ steps.build_flags.outputs.build_type }}/webview.exe ${{ matrix.binary_name }}-devtools.exe
 
       - name: Upload artifact
