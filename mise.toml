@@ -58,7 +58,17 @@ depends = ["gen:*"]
 
 [tasks."build:rust"]
 description = "Build the webview binary"
-run = "cargo {% if get_env(name='MISE_ENV', default='') == 'windows' %}xwin{% endif %} build --bin webview"
+run = """
+{% set xwin = '' %}
+{% set features = '' %}
+{% if get_env(name='MISE_ENV', default='') == 'windows' %}
+  {% set xwin = ' xwin' %}
+{% endif %}
+{% if get_env(name='CI', default='') != 'true' %}
+  {% set features = ' --features transparent,devtools' %}
+{% endif %}
+cargo{{xwin}} build --bin webview{{features}}
+"""
 sources = ["src/**/*.rs", "Cargo.toml", "Cargo.lock"]
 outputs = ["target/debug/webview"]
 depends = ["gen:rust"]
