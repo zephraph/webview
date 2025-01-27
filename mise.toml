@@ -1,11 +1,12 @@
 [tools]
 deno = "2.1.6"
-rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy" }
+rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
 
 [settings]
 experimental = true
 
 [tasks."ci:install-deps"]
+hide = true
 description = "Install CI dependencies (only runs on CI)"
 run = """
     {% if env.CI and os() == "linux" %}
