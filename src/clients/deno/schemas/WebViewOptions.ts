@@ -59,7 +59,7 @@ export type WebViewOptions = {
   /** Sets whether host should be able to receive messages from the webview via `window.ipc.postMessage`. */
   ipc?: boolean;
   /** The content to load into the webview. */
-  load: WebViewContent;
+  load?: WebViewContent;
   /** The size of the window. */
   size?: WindowSize;
   /** Sets the title of the window. */
@@ -97,7 +97,7 @@ export const WebViewOptions: z.ZodType<WebViewOptions> = z.object({
   incognito: z.boolean().optional(),
   initializationScript: z.string(),
   ipc: z.boolean().optional(),
-  load: WebViewContent,
+  load: WebViewContent.optional(),
   size: WindowSize.optional(),
   title: z.string(),
   transparent: z.boolean().optional(),

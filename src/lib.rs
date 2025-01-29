@@ -53,7 +53,8 @@ pub struct WebViewOptions {
     /// Sets the title of the window.
     title: String,
     /// The content to load into the webview.
-    load: WebViewContent,
+    #[serde(default)]
+    load: Option<WebViewContent>,
     /// The size of the window.
     #[serde(default)]
     size: Option<WindowSize>,
@@ -323,7 +324,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
 
     let html_mutex_init = html_mutex.clone();
     let mut webview_builder = match webview_options.load {
-        WebViewContent::Url { url, headers } => {
+        Some(WebViewContent::Url { url, headers }) => {
             let mut webview_builder = WebViewBuilder::new().with_url(url);
             if let Some(headers) = headers {
                 let headers = headers
@@ -339,11 +340,12 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
             }
             webview_builder
         }
-        WebViewContent::Html { html, origin } => {
+        Some(WebViewContent::Html { html, origin }) => {
             *origin_mutex.lock() = origin.clone();
             *html_mutex.lock() = html;
             WebViewBuilder::new().with_url(&format!("load-html://{}", origin))
         }
+        None => WebViewBuilder::new(),
     }
     .with_custom_protocol("load-html".into(), move |_id, _req| {
         HttpResponse::builder()

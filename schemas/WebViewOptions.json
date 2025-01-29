@@ -4,7 +4,6 @@
   "description": "Options for creating a webview.",
   "type": "object",
   "required": [
-    "load",
     "title"
   ],
   "properties": {
@@ -58,9 +57,12 @@
     },
     "load": {
       "description": "The content to load into the webview.",
-      "allOf": [
+      "anyOf": [
         {
           "$ref": "#/definitions/WebViewContent"
+        },
+        {
+          "type": "null"
         }
       ]
     },
