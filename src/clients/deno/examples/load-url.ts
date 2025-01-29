@@ -2,9 +2,11 @@ import { createWebView } from "../main.ts";
 
 using webview = await createWebView({
   title: "Load Url Example",
-  url: "https://example.com",
-  headers: {
-    "Content-Type": "text/html",
+  load: {
+    url: "https://example.com",
+    headers: {
+      "Content-Type": "text/html",
+    },
   },
   userAgent: "curl/7.81.0",
   devtools: true,

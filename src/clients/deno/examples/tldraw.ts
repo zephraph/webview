@@ -29,7 +29,8 @@ const app = await esbuild.transform(tldrawApp, {
 
 using webview = await createWebView({
   title: "TLDraw",
-  html: `
+  load: {
+    html: `
     <!DOCTYPE html>
     <html lang="en">
       <head>
@@ -55,6 +56,7 @@ using webview = await createWebView({
       </body>
     </html>
   `,
+  },
 });
 
 await webview.waitUntilClosed();

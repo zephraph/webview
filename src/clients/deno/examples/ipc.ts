@@ -2,8 +2,10 @@ import { createWebView } from "../main.ts";
 
 using webview = await createWebView({
   title: "Simple",
-  html:
-    '<button onclick="window.ipc.postMessage(`button clicked ${Date.now()}`)">Click me</button>',
+  load: {
+    html:
+      '<button onclick="window.ipc.postMessage(`button clicked ${Date.now()}`)">Click me</button>',
+  },
   ipc: true,
 });
 
