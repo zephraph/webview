@@ -16,6 +16,9 @@ tao = "0.31.0"
 wry = "0.48.0"
 schemars = "0.8.21"
 parking_lot = "0.12"
+actson = "2.0.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [features]
 transparent = ["wry/transparent"]

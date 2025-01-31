@@ -217,7 +217,7 @@ export class WebView implements Disposable {
       });
       this.#stdin.write(
         new TextEncoder().encode(
-          JSON.stringify({ ...request, id }).replace("\0", "") + "\0",
+          JSON.stringify({ ...request, id }),
         ),
       );
     });
@@ -231,14 +231,15 @@ export class WebView implements Disposable {
       }
       this.#buffer += new TextDecoder().decode(value);
 
-      const NulCharIndex = this.#buffer.indexOf("\0");
-      if (NulCharIndex === -1) {
+      const newlineIndex = this.#buffer.indexOf("\n");
+      if (newlineIndex === -1) {
         continue;
       }
+      console.error("buffer", this.#buffer);
       const result = WebViewMessage.safeParse(
-        JSON.parse(this.#buffer.slice(0, NulCharIndex)),
+        JSON.parse(this.#buffer.slice(0, newlineIndex)),
       );
-      this.#buffer = this.#buffer.slice(NulCharIndex + 1);
+      this.#buffer = this.#buffer.slice(newlineIndex + 1);
       if (result.success) {
         return result.data;
       } else {

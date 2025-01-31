@@ -1,16 +1,18 @@
+use actson::options::JsonParserOptionsBuilder;
 use parking_lot::Mutex;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
-use std::io::{self, BufRead, Write};
+use std::io::{BufReader, Read, Write};
 use std::str::FromStr;
-use std::sync::mpsc;
+use std::sync::mpsc::{self, Sender};
 use std::sync::Arc;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
+use tracing::{debug, error, info, warn};
 
 use tao::{
     event::{Event, StartCause, WindowEvent},
@@ -21,10 +23,13 @@ use wry::http::header::{HeaderName, HeaderValue};
 use wry::http::Response as HttpResponse;
 use wry::WebViewBuilder;
 
+use actson::feeder::BufReaderJsonFeeder;
+use actson::{JsonEvent, JsonParser};
+
 /// The version of the webview binary.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(JsonSchema, Deserialize, Debug)]
+#[derive(JsonSchema, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SimpleSize {
     width: f64,
@@ -132,7 +137,7 @@ fn default_origin() -> String {
 // --- RPC Definitions ---
 
 /// Complete definition of all outbound messages from the webview to the client.
-#[derive(JsonSchema, Serialize, Debug)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type", content = "data")]
 pub enum Message {
@@ -141,7 +146,7 @@ pub enum Message {
 }
 
 /// Messages that are sent unbidden from the webview to the client.
-#[derive(JsonSchema, Serialize, Debug)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 pub enum Notification {
@@ -157,7 +162,7 @@ pub enum Notification {
 }
 
 /// Explicit requests from the client to the webview.
-#[derive(JsonSchema, Deserialize, Debug)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 pub enum Request {
@@ -252,7 +257,7 @@ pub enum Request {
 }
 
 /// Responses from the webview to the client.
-#[derive(JsonSchema, Serialize, Debug)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 pub enum Response {
@@ -262,7 +267,7 @@ pub enum Response {
 }
 
 /// Types that can be returned from webview results.
-#[derive(JsonSchema, Serialize, Debug)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type", content = "value")]
 #[allow(dead_code)]
@@ -292,15 +297,129 @@ impl From<bool> for ResultType {
     }
 }
 
+/// Incrementally parses JSON input from a reader and sends the parsed requests to a sender.
+///
+/// This is used in the main program to read JSON input from stdin and send it to the webview
+/// event loop.
+fn process_input<R: Read + std::marker::Send + 'static>(
+    reader: BufReader<R>,
+    sender: Sender<Request>,
+) {
+    std::thread::spawn(move || {
+        let feeder = BufReaderJsonFeeder::new(reader);
+        let mut parser = JsonParser::new_with_options(
+            feeder,
+            JsonParserOptionsBuilder::default()
+                .with_streaming(true)
+                .build(),
+        );
+
+        let mut json_string = String::new();
+        let mut depth = 0;
+
+        while let Some(event) = parser.next_event().unwrap() {
+            match event {
+                JsonEvent::NeedMoreInput => parser.feeder.fill_buf().unwrap(),
+                JsonEvent::StartObject => {
+                    depth += 1;
+                    json_string.push('{');
+                }
+                JsonEvent::EndObject => {
+                    depth -= 1;
+                    json_string.push('}');
+
+                    // If we're back at depth 0, we have a complete JSON object
+                    if depth == 0 {
+                        match serde_json::from_str::<Request>(&json_string) {
+                            Ok(request) => {
+                                debug!(request = ?request, "Received request from client");
+                                sender.send(request).unwrap()
+                            }
+                            Err(e) => error!("Failed to deserialize request: {:?}", e),
+                        }
+                        json_string.clear();
+                    }
+                }
+                JsonEvent::StartArray => {
+                    depth += 1;
+                    json_string.push('[');
+                }
+                JsonEvent::EndArray => {
+                    depth -= 1;
+                    json_string.push(']');
+                }
+                JsonEvent::FieldName => {
+                    if json_string.ends_with('{') {
+                        json_string.push('"');
+                    } else {
+                        json_string.push_str(",\"");
+                    }
+                    json_string.push_str(parser.current_str().unwrap());
+                    json_string.push_str("\":");
+                }
+                JsonEvent::ValueString => {
+                    json_string.push('"');
+                    json_string.push_str(parser.current_str().unwrap());
+                    json_string.push('"');
+                }
+                JsonEvent::ValueInt => {
+                    json_string.push_str(&parser.current_int::<i64>().unwrap().to_string());
+                }
+                JsonEvent::ValueFloat => {
+                    json_string.push_str(&parser.current_float().unwrap().to_string());
+                }
+                JsonEvent::ValueTrue => json_string.push_str("true"),
+                JsonEvent::ValueFalse => json_string.push_str("false"),
+                JsonEvent::ValueNull => json_string.push_str("null"),
+            }
+        }
+    });
+}
+
+/// Incrementally writes messages to a writer.
+///
+/// This is used in the main program to write messages to stdout.
+fn process_output<W: Write + std::marker::Send + 'static>(
+    writer: W,
+    receiver: mpsc::Receiver<Message>,
+) {
+    std::thread::spawn(move || {
+        let mut writer = std::io::BufWriter::new(writer);
+
+        while let Ok(event) = receiver.recv() {
+            debug!(message = ?event, "Sending message to client");
+            match serde_json::to_string(&event) {
+                Ok(json) => {
+                    let mut buffer = json.into_bytes();
+                    buffer.push(b'\n');
+                    writer.write_all(&buffer).unwrap();
+                    writer.flush().unwrap();
+                }
+                Err(err) => {
+                    error!("Failed to serialize event: {:?} {:?}", event, err);
+                }
+            }
+        }
+    });
+}
+
 pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
+    // Initialize tracing subscriber
+    tracing_subscriber::fmt()
+        .with_env_filter(env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()))
+        .with_writer(std::io::stderr)
+        .init();
+
+    info!("Starting webview with options: {:?}", webview_options);
+
     // These two mutexes are used to store the html and origin if the webview is created with html.
     // The html mutex is needed to provide a value to the custom protocol and origin is needed
     // as a fallback if `load_html` is called without an origin.
     let html_mutex = Arc::new(Mutex::new("".to_string()));
     let origin_mutex = Arc::new(Mutex::new(default_origin().to_string()));
 
-    let (tx, to_deno) = mpsc::channel::<Message>();
-    let (from_deno, rx) = mpsc::channel::<Request>();
+    let (tx, from_webview) = mpsc::channel::<Message>();
+    let (to_eventloop, rx) = mpsc::channel::<Request>();
 
     let event_loop = EventLoop::new();
     let mut window_builder = WindowBuilder::new()
@@ -341,7 +460,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
             webview_builder
         }
         Some(WebViewContent::Html { html, origin }) => {
-            *origin_mutex.lock() = origin.clone();
+            origin_mutex.lock().clone_from(&origin);
             *html_mutex.lock() = html;
             WebViewBuilder::new().with_url(&format!("load-html://{}", origin))
         }
@@ -381,62 +500,32 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
 
     let notify_tx = tx.clone();
     let notify = move |notification: Notification| {
+        debug!(notification = ?notification, "Sending notification to client");
         notify_tx.send(Message::Notification(notification)).unwrap();
     };
 
     let res_tx = tx.clone();
     let res = move |response: Response| {
+        debug!(response = ?response, "Sending response to client");
         res_tx.send(Message::Response(response)).unwrap();
     };
 
     // Handle messages from the webview to the client.
-    std::thread::spawn(move || {
-        let stdout = std::io::stdout();
-        let mut stdout_lock = stdout.lock();
-
-        while let Ok(event) = to_deno.recv() {
-            match serde_json::to_string(&event) {
-                Ok(json) => {
-                    let mut buffer = json.replace("\0", "").into_bytes();
-                    buffer.push(0); // Add null byte
-                    stdout_lock.write_all(&buffer).unwrap();
-                    stdout_lock.flush().unwrap();
-                }
-                Err(err) => {
-                    eprintln!("Failed to serialize event: {:?} {:?}", event, err);
-                }
-            }
-        }
-    });
+    process_output(std::io::stdout(), from_webview);
 
     // Handle messages from the client to the webview.
-    std::thread::spawn(move || {
-        let stdin = io::stdin();
-        let mut stdin = stdin.lock();
-        let mut buf = Vec::<u8>::new();
-
-        while stdin.read_until(b'\0', &mut buf).is_ok() {
-            if buf.is_empty() {
-                break; // EOF reached
-            }
-            // Remove null byte
-            buf.pop();
-
-            match serde_json::from_slice::<Request>(&buf) {
-                Ok(event) => from_deno.send(event).unwrap(),
-                Err(e) => eprintln!("Failed to deserialize: {:?}", e),
-            }
-            buf.clear()
-        }
-    });
+    process_input(BufReader::new(std::io::stdin()), to_eventloop);
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::NewEvents(StartCause::Init) => notify(Notification::Started {
-                version: VERSION.into(),
-            }),
+            Event::NewEvents(StartCause::Init) => {
+                info!("Webview initialized");
+                notify(Notification::Started {
+                    version: VERSION.into(),
+                });
+            }
             Event::UserEvent(event) => {
                 eprintln!("User event: {:?}", event);
             }
@@ -444,20 +533,25 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
                 event: WindowEvent::CloseRequested,
                 ..
             } => {
+                info!("Webview close requested");
                 notify(Notification::Closed);
                 *control_flow = ControlFlow::Exit
             }
             Event::MainEventsCleared => {
                 if let Ok(req) = rx.try_recv() {
+                    debug!(request = ?req, "Processing request");
                     match req {
                         Request::Eval { id, js } => {
                             let result = webview.evaluate_script(&js);
                             res(match result {
                                 Ok(_) => Response::Ack { id },
-                                Err(err) => Response::Err {
-                                    id,
-                                    message: err.to_string(),
-                                },
+                                Err(err) => {
+                                    error!("Eval error: {:?}", err);
+                                    Response::Err {
+                                        id,
+                                        message: err.to_string(),
+                                    }
+                                }
                             });
                         }
                         Request::SetTitle { id, title } => {
@@ -547,7 +641,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
                             *html_mutex.lock() = html;
                             let origin = match origin {
                                 Some(origin) => {
-                                    *origin_mutex.lock() = origin.clone();
+                                    origin_mutex.lock().clone_from(&origin);
                                     origin
                                 }
                                 None => origin_mutex.lock().clone(),
@@ -588,4 +682,312 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
             _ => (),
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_process_input_simple() {
+        // Create a GetVersion request
+        let request = Request::GetVersion {
+            id: "test-123".to_string(),
+        };
+
+        // Serialize to JSON
+        let json = serde_json::to_vec(&request).unwrap();
+        let cursor = Cursor::new(json);
+        let reader = BufReader::new(cursor);
+        let (sender, receiver) = mpsc::channel();
+
+        // Capture stderr output
+        let stderr = std::io::stderr();
+        let _handle = stderr.lock();
+
+        process_input(reader, sender);
+
+        // Give the thread a moment to process
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Try to receive the message
+        match receiver.try_recv() {
+            Ok(received) => {
+                assert!(matches!(
+                    received,
+                    Request::GetVersion { id } if id == "test-123"
+                ));
+            }
+            Err(e) => panic!("Failed to receive message: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_process_input_complex() {
+        // Create a SetSize request with nested SimpleSize
+        let request = Request::SetSize {
+            id: "size-test".to_string(),
+            size: SimpleSize {
+                width: 800.0,
+                height: 600.0,
+            },
+        };
+
+        // Serialize to JSON
+        let json = serde_json::to_vec(&request).unwrap();
+        let cursor = Cursor::new(json);
+        let reader = BufReader::new(cursor);
+        let (sender, receiver) = mpsc::channel();
+
+        process_input(reader, sender);
+
+        // Give the thread a moment to process
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Try to receive the message
+        match receiver.try_recv() {
+            Ok(received) => match received {
+                Request::SetSize { id, size } => {
+                    assert_eq!(id, "size-test");
+                    assert_eq!(size.width, 800.0);
+                    assert_eq!(size.height, 600.0);
+                }
+                other => panic!("Unexpected request type: {:?}", other),
+            },
+            Err(e) => panic!("Failed to receive message: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_process_output() {
+        let output = Arc::new(Mutex::new(Vec::new()));
+        let output_clone = output.clone();
+        let (sender, receiver) = mpsc::channel();
+
+        // Start processing output
+        process_output(WriteGuard(output_clone), receiver);
+
+        // Create and send a test message
+        let message = Message::Response(Response::Ack {
+            id: "test-123".to_string(),
+        });
+        sender.send(message).unwrap();
+
+        // Give the thread a moment to process
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Check the output
+        let output_str = String::from_utf8(output.lock().clone()).unwrap();
+        let expected = serde_json::json!({
+            "$type": "response",
+            "data": {
+                "$type": "ack",
+                "id": "test-123"
+            }
+        });
+        let expected_str = expected.to_string() + "\n";
+        assert_eq!(output_str, expected_str);
+    }
+
+    // Helper struct to implement Write for our Arc<Mutex<Vec<u8>>>
+    struct WriteGuard(Arc<Mutex<Vec<u8>>>);
+
+    impl Write for WriteGuard {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().write(buf)
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.0.lock().flush()
+        }
+    }
+
+    #[test]
+    fn test_process_input_multiple() {
+        // Create multiple requests
+        let requests = vec![
+            Request::GetVersion {
+                id: "version-1".to_string(),
+            },
+            Request::SetSize {
+                id: "size-1".to_string(),
+                size: SimpleSize {
+                    width: 1024.0,
+                    height: 768.0,
+                },
+            },
+            Request::LoadUrl {
+                id: "url-1".to_string(),
+                url: "https://example.com".to_string(),
+                headers: Some(HashMap::from([
+                    ("User-Agent".to_string(), "test-agent".to_string()),
+                    ("Accept".to_string(), "text/html".to_string()),
+                ])),
+            },
+        ];
+
+        // Serialize each request and concatenate
+        let mut json = Vec::new();
+        for request in &requests {
+            json.extend(serde_json::to_vec(request).unwrap());
+        }
+
+        let cursor = Cursor::new(json);
+        let reader = BufReader::new(cursor);
+        let (sender, receiver) = mpsc::channel();
+
+        process_input(reader, sender);
+
+        // Give the thread a moment to process
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Try to receive all messages in order
+        for expected in requests {
+            match receiver.try_recv() {
+                Ok(received) => match (received, expected) {
+                    (Request::GetVersion { id: rid }, Request::GetVersion { id: eid }) => {
+                        assert_eq!(rid, eid);
+                    }
+                    (
+                        Request::SetSize {
+                            id: rid,
+                            size: rsize,
+                        },
+                        Request::SetSize {
+                            id: eid,
+                            size: esize,
+                        },
+                    ) => {
+                        assert_eq!(rid, eid);
+                        assert_eq!(rsize.width, esize.width);
+                        assert_eq!(rsize.height, esize.height);
+                    }
+                    (
+                        Request::LoadUrl {
+                            id: rid,
+                            url: rurl,
+                            headers: rheaders,
+                        },
+                        Request::LoadUrl {
+                            id: eid,
+                            url: eurl,
+                            headers: eheaders,
+                        },
+                    ) => {
+                        assert_eq!(rid, eid);
+                        assert_eq!(rurl, eurl);
+                        assert_eq!(rheaders, eheaders);
+                    }
+                    _ => panic!("Unexpected request type mismatch"),
+                },
+                Err(e) => panic!("Failed to receive message: {:?}", e),
+            }
+        }
+
+        // Verify no more messages
+        assert!(
+            receiver.try_recv().is_err(),
+            "Should not have any more messages"
+        );
+    }
+
+    #[test]
+    fn test_process_output_multiple() {
+        let output = Arc::new(Mutex::new(Vec::new()));
+        let output_clone = output.clone();
+        let (sender, receiver) = mpsc::channel();
+
+        // Start processing output
+        process_output(WriteGuard(output_clone), receiver);
+
+        // Create and send multiple test messages
+        let messages = vec![
+            Message::Response(Response::Ack {
+                id: "test-1".to_string(),
+            }),
+            Message::Notification(Notification::Started {
+                version: "1.0.0".to_string(),
+            }),
+            Message::Response(Response::Result {
+                id: "test-2".to_string(),
+                result: ResultType::Size {
+                    width: 800.0,
+                    height: 600.0,
+                    scale_factor: 1.0,
+                },
+            }),
+        ];
+
+        // Send all messages
+        for message in messages.clone() {
+            sender.send(message).unwrap();
+        }
+
+        // Give the thread a moment to process
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Get the output and split by newlines
+        let output_str = String::from_utf8(output.lock().clone()).unwrap();
+        let received_messages: Vec<Message> = output_str
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+
+        // Verify we got all messages in order
+        assert_eq!(received_messages.len(), messages.len());
+        for (received, expected) in received_messages.iter().zip(messages.iter()) {
+            match (received, expected) {
+                (
+                    Message::Response(Response::Ack { id: rid }),
+                    Message::Response(Response::Ack { id: eid }),
+                ) => {
+                    assert_eq!(rid, eid);
+                }
+                (
+                    Message::Notification(Notification::Started { version: rver }),
+                    Message::Notification(Notification::Started { version: ever }),
+                ) => {
+                    assert_eq!(rver, ever);
+                }
+                (
+                    Message::Response(Response::Result {
+                        id: rid,
+                        result: rres,
+                    }),
+                    Message::Response(Response::Result {
+                        id: eid,
+                        result: eres,
+                    }),
+                ) => {
+                    assert_eq!(rid, eid);
+                    match (rres, eres) {
+                        (
+                            ResultType::Size {
+                                width: rw,
+                                height: rh,
+                                scale_factor: rs,
+                            },
+                            ResultType::Size {
+                                width: ew,
+                                height: eh,
+                                scale_factor: es,
+                            },
+                        ) => {
+                            assert_eq!(rw, ew);
+                            assert_eq!(rh, eh);
+                            assert_eq!(rs, es);
+                        }
+                        _ => panic!("Unexpected result type"),
+                    }
+                }
+                _ => panic!("Message type mismatch"),
+            }
+        }
+
+        // Verify each line is valid JSON
+        for line in output_str.lines() {
+            assert!(serde_json::from_str::<Message>(line).is_ok());
+        }
+    }
 }
