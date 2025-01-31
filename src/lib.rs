@@ -12,6 +12,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
+use tracing::{debug, error, info, warn};
 
 use tao::{
     event::{Event, StartCause, WindowEvent},
@@ -330,8 +331,11 @@ fn process_input<R: Read + std::marker::Send + 'static>(
                     // If we're back at depth 0, we have a complete JSON object
                     if depth == 0 {
                         match serde_json::from_str::<Request>(&json_string) {
-                            Ok(request) => sender.send(request).unwrap(),
-                            Err(e) => eprintln!("Failed to deserialize request: {:?}", e),
+                            Ok(request) => {
+                                debug!(request = ?request, "Received request from client");
+                                sender.send(request).unwrap()
+                            }
+                            Err(e) => error!("Failed to deserialize request: {:?}", e),
                         }
                         json_string.clear();
                     }
@@ -383,6 +387,7 @@ fn process_output<W: Write + std::marker::Send + 'static>(
         let mut writer = std::io::BufWriter::new(writer);
 
         while let Ok(event) = receiver.recv() {
+            debug!(message = ?event, "Sending message to client");
             match serde_json::to_string(&event) {
                 Ok(json) => {
                     let mut buffer = json.into_bytes();
@@ -391,7 +396,7 @@ fn process_output<W: Write + std::marker::Send + 'static>(
                     writer.flush().unwrap();
                 }
                 Err(err) => {
-                    eprintln!("Failed to serialize event: {:?} {:?}", event, err);
+                    error!("Failed to serialize event: {:?} {:?}", event, err);
                 }
             }
         }
@@ -399,6 +404,14 @@ fn process_output<W: Write + std::marker::Send + 'static>(
 }
 
 pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
+    // Initialize tracing subscriber
+    tracing_subscriber::fmt()
+        .with_env_filter(env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()))
+        .with_writer(std::io::stderr)
+        .init();
+
+    info!("Starting webview with options: {:?}", webview_options);
+
     // These two mutexes are used to store the html and origin if the webview is created with html.
     // The html mutex is needed to provide a value to the custom protocol and origin is needed
     // as a fallback if `load_html` is called without an origin.
@@ -487,11 +500,13 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
 
     let notify_tx = tx.clone();
     let notify = move |notification: Notification| {
+        debug!(notification = ?notification, "Sending notification to client");
         notify_tx.send(Message::Notification(notification)).unwrap();
     };
 
     let res_tx = tx.clone();
     let res = move |response: Response| {
+        debug!(response = ?response, "Sending response to client");
         res_tx.send(Message::Response(response)).unwrap();
     };
 
@@ -505,9 +520,12 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::NewEvents(StartCause::Init) => notify(Notification::Started {
-                version: VERSION.into(),
-            }),
+            Event::NewEvents(StartCause::Init) => {
+                info!("Webview initialized");
+                notify(Notification::Started {
+                    version: VERSION.into(),
+                });
+            }
             Event::UserEvent(event) => {
                 eprintln!("User event: {:?}", event);
             }
@@ -515,20 +533,25 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
                 event: WindowEvent::CloseRequested,
                 ..
             } => {
+                info!("Webview close requested");
                 notify(Notification::Closed);
                 *control_flow = ControlFlow::Exit
             }
             Event::MainEventsCleared => {
                 if let Ok(req) = rx.try_recv() {
+                    debug!(request = ?req, "Processing request");
                     match req {
                         Request::Eval { id, js } => {
                             let result = webview.evaluate_script(&js);
                             res(match result {
                                 Ok(_) => Response::Ack { id },
-                                Err(err) => Response::Err {
-                                    id,
-                                    message: err.to_string(),
-                                },
+                                Err(err) => {
+                                    error!("Eval error: {:?}", err);
+                                    Response::Err {
+                                        id,
+                                        message: err.to_string(),
+                                    }
+                                }
                             });
                         }
                         Request::SetTitle { id, title } => {
