@@ -7,6 +7,7 @@
     "include": ["README.md", "LICENSE", "*.ts", "schemas/*.ts"]
   },
   "imports": {
+    "effection": "jsr:@effection/effection@4.0.0-alpha.6",
     "ts-pattern": "jsr:@gabriel/ts-pattern@^5.6.2",
     "tracing": "jsr:@bcheidemann/tracing@^0.6.3",
     "jsr:@std/fs": "jsr:@std/fs@^1.0.3",

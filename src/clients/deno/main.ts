@@ -33,6 +33,8 @@ import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
 import { error, FmtSubscriber, instrument, Level, trace, warn } from "tracing";
 import { match, P } from "ts-pattern";
+import { effection, ensure, resource } from "effection";
+import { resourceLimits } from "node:worker_threads";
 
 if (
   Deno.permissions.querySync({ name: "env", variable: "LOG_LEVEL" }).state ===
@@ -171,6 +173,23 @@ function getCacheDir(): string {
     });
 }
 
+function useWebviewProcess(binPath: string, options: WebViewOptions) {
+  return resource(function* (provide) {
+    const process = new Deno.Command(binPath, {
+      args: [JSON.stringify(options)],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "inherit",
+    }).spawn();
+
+    ensure(() => {
+      process.kill();
+    });
+
+    yield* provide(process);
+  });
+}
+
 /**
  * Creates a new webview window.
  *
@@ -301,6 +320,7 @@ export class WebView implements Disposable {
   /**
    * Listens for events emitted by the webview.
    */
+  @instrument()
   on<E extends WebViewNotification["$type"]>(
     event: E,
     callback: (
@@ -318,6 +338,7 @@ export class WebView implements Disposable {
   /**
    * Listens for a single event emitted by the webview.
    */
+  @instrument()
   once<E extends WebViewNotification["$type"]>(
     event: E,
     callback: (
