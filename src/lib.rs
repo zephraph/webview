@@ -12,7 +12,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 use tao::{
     event::{Event, StartCause, WindowEvent},
