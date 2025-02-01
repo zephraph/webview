@@ -12,7 +12,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 use tao::{
     event::{Event, StartCause, WindowEvent},
@@ -406,7 +406,7 @@ fn process_output<W: Write + std::marker::Send + 'static>(
 pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
     // Initialize tracing subscriber
     tracing_subscriber::fmt()
-        .with_env_filter(env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()))
+        .with_env_filter(env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()))
         .with_writer(std::io::stderr)
         .init();
 

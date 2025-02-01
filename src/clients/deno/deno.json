@@ -7,6 +7,8 @@
     "include": ["README.md", "LICENSE", "*.ts", "schemas/*.ts"]
   },
   "imports": {
+    "ts-pattern": "jsr:@gabriel/ts-pattern@^5.6.2",
+    "tracing": "jsr:@bcheidemann/tracing@^0.6.3",
     "jsr:@std/fs": "jsr:@std/fs@^1.0.3",
     "jsr:@std/path": "jsr:@std/path@^1.0.6",
     "jsr:@std/ulid": "jsr:@std/ulid@^1.0.0",
