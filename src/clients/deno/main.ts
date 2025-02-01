@@ -31,6 +31,23 @@ import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except, Simplify } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
+import { error, FmtSubscriber, instrument, Level, trace, warn } from "tracing";
+import { match, P } from "ts-pattern";
+
+if (
+  Deno.permissions.querySync({ name: "env", variable: "LOG_LEVEL" }).state ===
+    "granted"
+) {
+  const level = match(Deno.env.get("LOG_LEVEL"))
+    .with("debug", () => Level.DEBUG)
+    .with("info", () => Level.INFO)
+    .with("warn", () => Level.WARN)
+    .with("error", () => Level.ERROR)
+    .with("fatal", () => Level.CRITICAL)
+    .otherwise(() => Level.INFO);
+
+  FmtSubscriber.setGlobalDefault({ level, color: true });
+}
 
 export type { WebViewOptions } from "./schemas/WebViewOptions.ts";
 
@@ -74,14 +91,14 @@ function returnResult<
  * Throws if the response includes unexpected results.
  */
 const returnAck = (result: WebViewResponse) => {
-  switch (result.$type) {
-    case "ack":
-      return;
-    case "err":
-      throw new Error(result.message);
-    default:
+  return match(result)
+    .with({ $type: "ack" }, () => undefined)
+    .with({ $type: "err" }, (err) => {
+      throw new Error(err.message);
+    })
+    .otherwise(() => {
       throw new Error(`unexpected response: ${result.$type}`);
-  }
+    });
 };
 
 async function getWebViewBin(options: WebViewOptions) {
@@ -113,22 +130,16 @@ async function getWebViewBin(options: WebViewOptions) {
   // If not in cache, download it
   let url =
     `https://github.com/zephraph/webview/releases/download/webview-v${BIN_VERSION}/webview`;
-  switch (Deno.build.os) {
-    case "darwin": {
-      url += "-mac" + (Deno.build.arch === "aarch64" ? "-arm64" : "") + flags;
-      break;
-    }
-    case "linux": {
-      url += "-linux" + flags;
-      break;
-    }
-    case "windows": {
-      url += "-windows" + flags + ".exe";
-      break;
-    }
-    default:
+  url += match(Deno.build.os)
+    .with(
+      "darwin",
+      () => "-mac" + (Deno.build.arch === "aarch64" ? "-arm64" : "") + flags,
+    )
+    .with("linux", () => "-linux" + flags)
+    .with("windows", () => "-windows" + flags + ".exe")
+    .otherwise(() => {
       throw new Error("unsupported OS");
-  }
+    });
 
   const res = await fetch(url);
 
@@ -145,16 +156,19 @@ async function getWebViewBin(options: WebViewOptions) {
 
 // Helper function to get the OS-specific cache directory
 function getCacheDir(): string {
-  switch (Deno.build.os) {
-    case "darwin":
-      return join(Deno.env.get("HOME")!, "Library", "Caches", "webview");
-    case "linux":
-      return join(Deno.env.get("HOME")!, ".cache", "webview");
-    case "windows":
-      return join(Deno.env.get("LOCALAPPDATA")!, "webview", "Cache");
-    default:
+  return match(Deno.build.os)
+    .with(
+      "darwin",
+      () => join(Deno.env.get("HOME")!, "Library", "Caches", "webview"),
+    )
+    .with("linux", () => join(Deno.env.get("HOME")!, ".cache", "webview"))
+    .with(
+      "windows",
+      () => join(Deno.env.get("LOCALAPPDATA")!, "webview", "Cache"),
+    )
+    .otherwise(() => {
       throw new Error("Unsupported OS");
-  }
+    });
 }
 
 /**
@@ -223,6 +237,7 @@ export class WebView implements Disposable {
     });
   }
 
+  @instrument()
   async #recv() {
     while (true) {
       const { value, done } = await this.#stdout.read();
@@ -235,7 +250,7 @@ export class WebView implements Disposable {
       if (newlineIndex === -1) {
         continue;
       }
-      console.error("buffer", this.#buffer);
+      trace("buffer", { buffer: this.#buffer });
       const result = WebViewMessage.safeParse(
         JSON.parse(this.#buffer.slice(0, newlineIndex)),
       );
@@ -243,7 +258,7 @@ export class WebView implements Disposable {
       if (result.success) {
         return result.data;
       } else {
-        console.error("Error parsing message", result.error);
+        error("Error parsing message", { error: result.error });
         return result;
       }
     }
@@ -253,43 +268,26 @@ export class WebView implements Disposable {
     while (true) {
       const result = await this.#recv();
       if (!result) return;
-      if ("error" in result) {
-        // TODO: This should be handled more gracefully
-        for (const issue of result.error.issues) {
-          switch (issue.code) {
-            case "invalid_type":
-              console.error(
-                `Invalid type: expected ${issue.expected} but got ${issue.received}`,
-              );
-              break;
-            default:
-              console.error(`Unknown error: ${issue.message}`);
-          }
-        }
-        continue;
-      }
-      const { $type, data } = result;
-
-      if ($type === "notification") {
-        const { $type, ...body } = data;
-        this.#externalEvent.emit($type, body);
-        if (data.$type === "started") {
-          const version = data.version;
-          if (version !== BIN_VERSION) {
-            console.warn(
-              `Expected webview to be version ${BIN_VERSION} but got ${version}. Some features may not work as expected.`,
+      match(result)
+        .with({ error: { issues: [{ code: "invalid_type" }] } }, (result) => {
+          error("Invalid type", { error: result.error });
+        })
+        .with({ error: P.nonNullable }, (result) => {
+          error("Unknown error", { error: result.error });
+        })
+        .with({ $type: "notification" }, ({ data }) => {
+          const { $type, ...body } = data;
+          this.#externalEvent.emit($type, body);
+          if (data.$type === "started" && data.version !== BIN_VERSION) {
+            warn(
+              `Expected webview to be version ${BIN_VERSION} but got ${data.version}. Some features may not work as expected.`,
             );
           }
-        }
-        if ($type === "closed") {
-          return;
-        }
-      }
-
-      if ($type === "response") {
-        const response = data;
-        this.#internalEvent.emit(response.id, response);
-      }
+        })
+        .with({ $type: "response" }, ({ data }) => {
+          this.#internalEvent.emit(data.id, data);
+        })
+        .exhaustive();
     }
   }
 
@@ -337,6 +335,7 @@ export class WebView implements Disposable {
   /**
    * Gets the version of the webview binary.
    */
+  @instrument()
   async getVersion(): Promise<string> {
     const result = await this.#send({ $type: "getVersion" });
     return returnResult(result, "string");
@@ -348,6 +347,7 @@ export class WebView implements Disposable {
    * Note: this is the logical size of the window, not the physical size.
    * @see https://docs.rs/dpi/0.1.1/x86_64-unknown-linux-gnu/dpi/index.html#position-and-size-types
    */
+  @instrument()
   async setSize(size: { width: number; height: number }): Promise<void> {
     const result = await this.#send({ $type: "setSize", size });
     return returnAck(result);
@@ -359,6 +359,7 @@ export class WebView implements Disposable {
    * Note: this is the logical size of the window, not the physical size.
    * @see https://docs.rs/dpi/0.1.1/x86_64-unknown-linux-gnu/dpi/index.html#position-and-size-types
    */
+  @instrument()
   async getSize(
     includeDecorations?: boolean,
   ): Promise<{ width: number; height: number; scaleFactor: number }> {
@@ -378,6 +379,7 @@ export class WebView implements Disposable {
    *
    * @param fullscreen - If true, the webview will enter fullscreen mode. If false, the webview will exit fullscreen mode. If not specified, the webview will toggle fullscreen mode.
    */
+  @instrument()
   async fullscreen(fullscreen?: boolean): Promise<void> {
     const result = await this.#send({ $type: "fullscreen", fullscreen });
     return returnAck(result);
@@ -388,6 +390,7 @@ export class WebView implements Disposable {
    *
    * @param maximized - If true, the webview will be maximized. If false, the webview will be unmaximized. If not specified, the webview will toggle maximized state.
    */
+  @instrument()
   async maximize(maximized?: boolean): Promise<void> {
     const result = await this.#send({ $type: "maximize", maximized });
     return returnAck(result);
@@ -398,6 +401,7 @@ export class WebView implements Disposable {
    *
    * @param minimized - If true, the webview will be minimized. If false, the webview will be unminimized. If not specified, the webview will toggle minimized state.
    */
+  @instrument()
   async minimize(minimized?: boolean): Promise<void> {
     const result = await this.#send({ $type: "minimize", minimized });
     return returnAck(result);
@@ -406,6 +410,7 @@ export class WebView implements Disposable {
   /**
    * Sets the title of the webview window.
    */
+  @instrument()
   async setTitle(title: string): Promise<void> {
     const result = await this.#send({
       $type: "setTitle",
@@ -417,6 +422,7 @@ export class WebView implements Disposable {
   /**
    * Gets the title of the webview window.
    */
+  @instrument()
   async getTitle(): Promise<string> {
     const result = await this.#send({ $type: "getTitle" });
     return returnResult(result, "string");
@@ -425,6 +431,7 @@ export class WebView implements Disposable {
   /**
    * Sets the visibility of the webview window.
    */
+  @instrument()
   async setVisibility(visible: boolean): Promise<void> {
     const result = await this.#send({ $type: "setVisibility", visible });
     return returnAck(result);
@@ -433,6 +440,7 @@ export class WebView implements Disposable {
   /**
    * Returns true if the webview window is visible.
    */
+  @instrument()
   async isVisible(): Promise<boolean> {
     const result = await this.#send({ $type: "isVisible" });
     return returnResult(result, "boolean");
@@ -441,6 +449,7 @@ export class WebView implements Disposable {
   /**
    * Evaluates JavaScript code in the webview.
    */
+  @instrument()
   async eval(code: string): Promise<void> {
     const result = await this.#send({ $type: "eval", js: code });
     return returnAck(result);
@@ -449,6 +458,7 @@ export class WebView implements Disposable {
   /**
    * Opens the developer tools for the webview.
    */
+  @instrument()
   async openDevTools(): Promise<void> {
     const result = await this.#send({ $type: "openDevTools" });
     return returnAck(result);
@@ -457,6 +467,7 @@ export class WebView implements Disposable {
   /**
    * Reloads the webview with the provided html.
    */
+  @instrument()
   async loadHtml(html: string): Promise<void> {
     const result = await this.#send({ $type: "loadHtml", html });
     return returnAck(result);
@@ -465,6 +476,7 @@ export class WebView implements Disposable {
   /**
    * Loads a URL in the webview.
    */
+  @instrument()
   async loadUrl(url: string, headers?: Record<string, string>): Promise<void> {
     const result = await this.#send({ $type: "loadUrl", url, headers });
     return returnAck(result);
@@ -482,6 +494,7 @@ export class WebView implements Disposable {
    * using webview = await createWebView({ title: "My Webview" });
    * ```
    */
+  @instrument()
   destroy() {
     this[Symbol.dispose]();
   }
