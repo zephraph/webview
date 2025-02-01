@@ -404,12 +404,6 @@ fn process_output<W: Write + std::marker::Send + 'static>(
 }
 
 pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
-    // Initialize tracing subscriber
-    tracing_subscriber::fmt()
-        .with_env_filter(env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()))
-        .with_writer(std::io::stderr)
-        .init();
-
     info!("Starting webview with options: {:?}", webview_options);
 
     // These two mutexes are used to store the html and origin if the webview is created with html.
@@ -462,7 +456,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
         Some(WebViewContent::Html { html, origin }) => {
             origin_mutex.lock().clone_from(&origin);
             *html_mutex.lock() = html;
-            WebViewBuilder::new().with_url(&format!("load-html://{}", origin))
+            WebViewBuilder::new().with_url(format!("load-html://{}", origin))
         }
         None => WebViewBuilder::new(),
     }
