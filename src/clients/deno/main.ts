@@ -39,6 +39,7 @@ if (
     "granted"
 ) {
   const level = match(Deno.env.get("LOG_LEVEL"))
+    .with("trace", () => Level.TRACE)
     .with("debug", () => Level.DEBUG)
     .with("info", () => Level.INFO)
     .with("warn", () => Level.WARN)
