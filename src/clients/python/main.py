@@ -126,12 +126,14 @@ async def get_webview_bin(options: WebViewOptions) -> str:
 def get_cache_dir() -> Path:
     if platform.system() == "Darwin":
         return Path.home() / "Library" / "Caches" / "python-webview"
-    elif platform.system() == "Linux":
+        
+    if platform.system() == "Linux":
         return Path.home() / ".cache" / "python-webview"
-    elif platform.system() == "Windows":
+        
+    if platform.system() == "Windows":
         return Path(os.environ["LOCALAPPDATA"]) / "python-webview" / "Cache"
-    else:
-        raise ValueError("Unsupported OS")
+    
+    raise ValueError("Unsupported OS")
 
 
 class WebView:
