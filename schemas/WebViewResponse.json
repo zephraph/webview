@@ -139,33 +139,36 @@
               ]
             },
             "value": {
-              "type": "object",
-              "required": [
-                "height",
-                "scale_factor",
-                "width"
-              ],
-              "properties": {
-                "height": {
-                  "description": "The height of the window in logical pixels.",
-                  "type": "number",
-                  "format": "double"
-                },
-                "scale_factor": {
-                  "description": "The ratio between physical and logical sizes.",
-                  "type": "number",
-                  "format": "double"
-                },
-                "width": {
-                  "description": "The width of the window in logical pixels.",
-                  "type": "number",
-                  "format": "double"
-                }
-              }
+              "$ref": "#/definitions/SizeWithScale"
             }
           }
         }
       ]
+    },
+    "SizeWithScale": {
+      "type": "object",
+      "required": [
+        "height",
+        "scaleFactor",
+        "width"
+      ],
+      "properties": {
+        "height": {
+          "description": "The height of the window in logical pixels.",
+          "type": "number",
+          "format": "double"
+        },
+        "scaleFactor": {
+          "description": "The ratio between physical and logical sizes.",
+          "type": "number",
+          "format": "double"
+        },
+        "width": {
+          "description": "The width of the window in logical pixels.",
+          "type": "number",
+          "format": "double"
+        }
+      }
     }
   }
 }
