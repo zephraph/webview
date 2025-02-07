@@ -7,10 +7,10 @@ use std::io::{BufReader, Read, Write};
 use std::str::FromStr;
 use std::sync::mpsc::{self, Sender};
 use std::sync::Arc;
+use tao::dpi;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tao::dpi::{LogicalSize, Size};
 use tao::window::Fullscreen;
 use tracing::{debug, error, info};
 
@@ -31,9 +31,22 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(JsonSchema, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SimpleSize {
+pub struct Size {
+    /// The width of the window in logical pixels.
     width: f64,
+    /// The height of the window in logical pixels.
     height: f64,
+}
+
+#[derive(JsonSchema, Deserialize, Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SizeWithScale {
+    /// The width of the window in logical pixels.
+    width: f64,
+    /// The height of the window in logical pixels.
+    height: f64,
+    /// The ratio between physical and logical sizes.
+    scale_factor: f64,
 }
 
 #[derive(JsonSchema, Deserialize, Debug)]
@@ -48,7 +61,7 @@ pub enum WindowSizeStates {
 #[serde(untagged)]
 pub enum WindowSize {
     States(WindowSizeStates),
-    Size { width: f64, height: f64 },
+    Size(Size),
 }
 
 /// Options for creating a webview.
@@ -211,7 +224,7 @@ pub enum Request {
         /// The id of the request.
         id: String,
         /// The size to set.
-        size: SimpleSize,
+        size: Size,
     },
     Fullscreen {
         /// The id of the request.
@@ -275,14 +288,7 @@ pub enum ResultType {
     String(String),
     Boolean(bool),
     Float(f64),
-    Size {
-        /// The width of the window in logical pixels.
-        width: f64,
-        /// The height of the window in logical pixels.
-        height: f64,
-        /// The ratio between physical and logical sizes.
-        scale_factor: f64,
-    },
+    Size(SizeWithScale),
 }
 
 impl From<String> for ResultType {
@@ -427,9 +433,9 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
         Some(WindowSize::States(WindowSizeStates::Fullscreen)) => {
             window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)))
         }
-        Some(WindowSize::Size { width, height }) => {
-            window_builder =
-                window_builder.with_inner_size(Size::Logical(LogicalSize::new(width, height)))
+        Some(WindowSize::Size(Size { width, height })) => {
+            window_builder = window_builder
+                .with_inner_size(dpi::Size::Logical(dpi::LogicalSize::new(width, height)))
         }
         None => (),
     }
@@ -595,15 +601,15 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
                             };
                             res(Response::Result {
                                 id,
-                                result: ResultType::Size {
+                                result: ResultType::Size(SizeWithScale {
                                     width: size.width,
                                     height: size.height,
                                     scale_factor: window.scale_factor(),
-                                },
+                                }),
                             });
                         }
                         Request::SetSize { id, size } => {
-                            window.set_inner_size(Size::Logical(LogicalSize::new(
+                            window.set_inner_size(dpi::Size::Logical(dpi::LogicalSize::new(
                                 size.width,
                                 size.height,
                             )));
@@ -722,7 +728,7 @@ mod tests {
         // Create a SetSize request with nested SimpleSize
         let request = Request::SetSize {
             id: "size-test".to_string(),
-            size: SimpleSize {
+            size: Size {
                 width: 800.0,
                 height: 600.0,
             },
@@ -806,7 +812,7 @@ mod tests {
             },
             Request::SetSize {
                 id: "size-1".to_string(),
-                size: SimpleSize {
+                size: Size {
                     width: 1024.0,
                     height: 768.0,
                 },
@@ -905,11 +911,11 @@ mod tests {
             }),
             Message::Response(Response::Result {
                 id: "test-2".to_string(),
-                result: ResultType::Size {
+                result: ResultType::Size(SizeWithScale {
                     width: 800.0,
                     height: 600.0,
                     scale_factor: 1.0,
-                },
+                }),
             }),
         ];
 
@@ -957,16 +963,16 @@ mod tests {
                     assert_eq!(rid, eid);
                     match (rres, eres) {
                         (
-                            ResultType::Size {
+                            ResultType::Size(SizeWithScale {
                                 width: rw,
                                 height: rh,
                                 scale_factor: rs,
-                            },
-                            ResultType::Size {
+                            }),
+                            ResultType::Size(SizeWithScale {
                                 width: ew,
                                 height: eh,
                                 scale_factor: es,
-                            },
+                            }),
                         ) => {
                             assert_eq!(rw, ew);
                             assert_eq!(rh, eh);

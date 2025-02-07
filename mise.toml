@@ -1,5 +1,6 @@
 [tools]
 deno = "2.1.8"
+"npm:@ast-grep/cli" = "0.32.2"
 rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
 
 [settings]
@@ -93,6 +94,16 @@ run = ["cargo fmt --check", "cargo clippy"]
 description = "Run deno lint"
 dir = "src/clients/deno"
 run = ["deno lint", "deno check ."]
+
+[tasks."lint:ast-grep"]
+description = "Run ast-grep lint"
+run = """
+{% set format = '' %}
+{% if get_env(name='CI', default='') == 'true' %}
+  {% set format = ' --format=github' %}
+{% endif %}
+sg scan {{format}} .
+"""
 
 [tasks."lint"]
 description = "Run all linting tasks"

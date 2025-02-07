@@ -19,6 +19,15 @@ export type Notification =
     $type: "closed";
   };
 
+export type SizeWithScale = {
+  /** The height of the window in logical pixels. */
+  height: number;
+  /** The ratio between physical and logical sizes. */
+  scaleFactor: number;
+  /** The width of the window in logical pixels. */
+  width: number;
+};
+
 /**
  * Types that can be returned from webview results.
  */
@@ -41,14 +50,7 @@ export type ResultType =
   | {
     $type: "size";
 
-    value: {
-      /** The height of the window in logical pixels. */
-      height: number;
-      /** The ratio between physical and logical sizes. */
-      scale_factor: number;
-      /** The width of the window in logical pixels. */
-      width: number;
-    };
+    value: SizeWithScale;
   };
 
 /**
@@ -99,18 +101,17 @@ export const Notification: z.ZodType<Notification> = z.discriminatedUnion(
   ],
 );
 
+export const SizeWithScale: z.ZodType<SizeWithScale> = z.object({
+  height: z.number(),
+  scaleFactor: z.number(),
+  width: z.number(),
+});
+
 export const ResultType: z.ZodType<ResultType> = z.discriminatedUnion("$type", [
   z.object({ $type: z.literal("string"), value: z.string() }),
   z.object({ $type: z.literal("boolean"), value: z.boolean() }),
   z.object({ $type: z.literal("float"), value: z.number() }),
-  z.object({
-    $type: z.literal("size"),
-    value: z.object({
-      height: z.number(),
-      scale_factor: z.number(),
-      width: z.number(),
-    }),
-  }),
+  z.object({ $type: z.literal("size"), value: SizeWithScale }),
 ]);
 
 export const Response: z.ZodType<Response> = z.discriminatedUnion("$type", [

@@ -96,6 +96,25 @@
     }
   },
   "definitions": {
+    "Size": {
+      "type": "object",
+      "required": [
+        "height",
+        "width"
+      ],
+      "properties": {
+        "height": {
+          "description": "The height of the window in logical pixels.",
+          "type": "number",
+          "format": "double"
+        },
+        "width": {
+          "description": "The width of the window in logical pixels.",
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
     "WebViewContent": {
       "description": "The content to load into the webview.",
       "anyOf": [
@@ -146,21 +165,7 @@
           "$ref": "#/definitions/WindowSizeStates"
         },
         {
-          "type": "object",
-          "required": [
-            "height",
-            "width"
-          ],
-          "properties": {
-            "height": {
-              "type": "number",
-              "format": "double"
-            },
-            "width": {
-              "type": "number",
-              "format": "double"
-            }
-          }
+          "$ref": "#/definitions/Size"
         }
       ]
     },

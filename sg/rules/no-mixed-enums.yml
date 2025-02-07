@@ -1,0 +1,20 @@
+id: no-mixed-enum
+language: rust
+severity: error
+message: Don't mix call style and object style enum variants
+rule:
+  matches: enum
+  all:
+    - has:
+        stopBy: end
+        all:
+          - kind: field_declaration_list
+    - has:
+        stopBy: end
+        all:
+          - kind: ordered_field_declaration_list
+utils:
+  enum:
+    any:
+      - pattern: enum $VARIANT{$$$BODY}
+      - pattern: pub enum $VARIANT{$$$BODY}

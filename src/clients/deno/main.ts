@@ -368,11 +368,10 @@ export class WebView implements Disposable {
       $type: "getSize",
       include_decorations: includeDecorations,
     });
-    const { width, height, scale_factor: scaleFactor } = returnResult(
+    return returnResult(
       result,
       "size",
     );
-    return { width, height, scaleFactor };
   }
 
   /**
