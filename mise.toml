@@ -95,6 +95,16 @@ description = "Run deno lint"
 dir = "src/clients/deno"
 run = ["deno lint", "deno check ."]
 
+[tasks."lint:ast-grep"]
+description = "Run ast-grep lint"
+run = """
+{% set format = '' %}
+{% if get_env(name='CI', default='') == 'true' %}
+  {% set format = ' --format=github' %}
+{% endif %}
+sg scan {{format}} .
+"""
+
 [tasks."lint"]
 description = "Run all linting tasks"
 depends = ["lint:*"]
