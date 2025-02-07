@@ -34,6 +34,7 @@ jobs:
         env:
           RUSTUP_TARGET: ${{ matrix.target }}
           MISE_ENV: ${{ matrix.platform }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           cache_key_prefix: mise-${{ hashFiles('mise.toml') }}-${{ matrix.target }}
           experimental: true
