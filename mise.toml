@@ -1,7 +1,7 @@
 [tools]
 deno = "2.1.8"
 "npm:@ast-grep/cli" = "0.32.2"
-rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
+rust = { version = "1.84.1", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
 
 [settings]
 experimental = true
