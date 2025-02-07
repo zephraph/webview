@@ -129,9 +129,9 @@ function generateNode(node: Node, writer: Writer) {
 
       for (const { key, required, description, value } of sortedProperties) {
         w(`    ${key}: `);
-        if (!required) w("Optional[");
+        if (!required) w("Union[");
         generateNode(value, writer);
-        if (!required) w("] = None");
+        if (!required) w(" | None] = None");
         wn("");
         if (description) {
           wn(`    """${description}"""`);
@@ -163,11 +163,11 @@ function generateNode(node: Node, writer: Writer) {
 
         for (const { key, required, description, value } of sortedProperties) {
           d(`    ${key}: `);
-          if (!required) d("Optional[");
+          if (!required) d("Union[");
           !isComplexType(value)
             ? generateNode(value, depWriter)
             : d(value.name ?? value.type);
-          if (!required) d("] = None");
+          if (!required) d(" | None] = None");
           dn("");
           if (description) {
             dn(`    """${description}"""`);
