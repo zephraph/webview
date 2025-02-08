@@ -131,7 +131,7 @@ function generateNode(node: Node, writer: Writer) {
         w(`    ${key}: `);
         if (!required) w("Union[");
         generateNode(value, writer);
-        if (!required) w(" | None] = None");
+        if (!required) w(", None] = None");
         wn("");
         if (description) {
           wn(`    """${description}"""`);
