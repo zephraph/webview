@@ -2,8 +2,12 @@ import sys
 import asyncio
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
-from main import WebView, WebViewOptions, WebViewContentHtml, WebViewNotification
+from webview_python import (
+    WebView,
+    WebViewOptions,
+    WebViewContentHtml,
+    WebViewNotification,
+)
 
 
 async def main():
@@ -33,4 +37,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())
+

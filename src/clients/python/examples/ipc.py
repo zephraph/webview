@@ -1,10 +1,7 @@
-import sys
 import asyncio
-from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
-from main import WebView, WebViewOptions, WebViewContentHtml
-from schemas.WebViewMessage import IpcNotification
+from webview_python import WebView, WebViewOptions, WebViewContentHtml
+from webview_python.schemas.WebViewMessage import IpcNotification
 
 
 async def main():
