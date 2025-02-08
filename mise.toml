@@ -7,7 +7,6 @@ uv = "0.5.20"
 
 [settings]
 experimental = true
-pipx.uvx = true
 
 [tasks."ci:install-deps"]
 hide = true
