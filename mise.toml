@@ -1,6 +1,5 @@
 [tools]
 deno = "2.1.9"
-python = "3.13.1"
 "npm:@ast-grep/cli" = "0.32.2"
 rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
 ruff = "0.9.1"
