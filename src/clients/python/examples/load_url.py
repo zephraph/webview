@@ -1,3 +1,12 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "webview-python",
+# ]
+#
+# [tool.uv.sources]
+# webview-python = { path = "../" }
+# ///
 import sys
 import asyncio
 import time
