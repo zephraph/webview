@@ -11,7 +11,7 @@ import msgspec
 import sys
 
 # Import schemas
-from schemas.WebViewMessage import (
+from .schemas.WebViewMessage import (
     NotificationMessage,
     ResponseMessage,
     StartedNotification,
@@ -27,7 +27,7 @@ from schemas.WebViewMessage import (
     Notification as WebViewNotification,
     WebViewMessage,
 )
-from schemas.WebViewRequest import (
+from .schemas.WebViewRequest import (
     WebViewRequest,
     GetVersionRequest,
     EvalRequest,
@@ -45,10 +45,10 @@ from schemas.WebViewRequest import (
     LoadUrlRequest,
     Size,
 )
-from schemas.WebViewOptions import (
+from .schemas.WebViewOptions import (
     WebViewOptions,
-    WebViewContentHtml,  
-    WebViewContentUrl,   
+    WebViewContentHtml,
+    WebViewContentUrl,
 )
 
 # Constants
@@ -126,13 +126,13 @@ async def get_webview_bin(options: WebViewOptions) -> str:
 def get_cache_dir() -> Path:
     if platform.system() == "Darwin":
         return Path.home() / "Library" / "Caches" / "python-webview"
-        
+
     if platform.system() == "Linux":
         return Path.home() / ".cache" / "python-webview"
-        
+
     if platform.system() == "Windows":
         return Path(os.environ["LOCALAPPDATA"]) / "python-webview" / "Cache"
-    
+
     raise ValueError("Unsupported OS")
 
 
@@ -315,9 +315,7 @@ class WebView:
         return return_result(result, StringResultType)
 
     async def set_size(self, size: dict[Literal["width", "height"], float]):
-        result = await self.send(
-            SetSizeRequest(id=self.message_id, size=Size(**size))
-        )
+        result = await self.send(SetSizeRequest(id=self.message_id, size=Size(**size)))
         return_ack(result)
 
     async def get_size(
@@ -340,11 +338,15 @@ class WebView:
         return_ack(result)
 
     async def maximize(self, maximized: bool | None = None):
-        result = await self.send(MaximizeRequest(id=self.message_id, maximized=maximized))
+        result = await self.send(
+            MaximizeRequest(id=self.message_id, maximized=maximized)
+        )
         return_ack(result)
 
     async def minimize(self, minimized: bool | None = None):
-        result = await self.send(MinimizeRequest(id=self.message_id, minimized=minimized))
+        result = await self.send(
+            MinimizeRequest(id=self.message_id, minimized=minimized)
+        )
         return_ack(result)
 
     async def set_title(self, title: str):
@@ -356,7 +358,9 @@ class WebView:
         return return_result(result, StringResultType)
 
     async def set_visibility(self, visible: bool):
-        result = await self.send(SetVisibilityRequest(id=self.message_id, visible=visible))
+        result = await self.send(
+            SetVisibilityRequest(id=self.message_id, visible=visible)
+        )
         return_ack(result)
 
     async def is_visible(self) -> bool:
