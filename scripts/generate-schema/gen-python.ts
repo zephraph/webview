@@ -131,7 +131,7 @@ function generateNode(node: Node, writer: Writer) {
         w(`    ${key}: `);
         if (!required) w("Union[");
         generateNode(value, writer);
-        if (!required) w(" | None] = None");
+        if (!required) w(", None] = None");
         wn("");
         if (description) {
           wn(`    """${description}"""`);
@@ -167,7 +167,7 @@ function generateNode(node: Node, writer: Writer) {
           !isComplexType(value)
             ? generateNode(value, depWriter)
             : d(value.name ?? value.type);
-          if (!required) d(" | None] = None");
+          if (!required) d(", None] = None");
           dn("");
           if (description) {
             dn(`    """${description}"""`);
