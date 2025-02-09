@@ -10,4 +10,8 @@
     "scripts",
     "src/clients/deno"
   ],
+  "python.analysis.typeCheckingMode": "strict",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/src/clients/python/.venv/lib/python3.*/site-packages"
+  ],
 }

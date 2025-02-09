@@ -1,4 +1,6 @@
 /target
 _test*
 .DS_Store
+__pycache__
+node_modules
 .vscode/mise-tools
