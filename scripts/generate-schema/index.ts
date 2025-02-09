@@ -10,7 +10,7 @@ const schemasDir = new URL("../../schemas", import.meta.url).pathname;
 const tsSchemaDir =
   new URL("../../src/clients/deno/schemas", import.meta.url).pathname;
 const pySchemaDir =
-  new URL("../../src/clients/python/schemas", import.meta.url).pathname;
+  new URL("../../src/clients/python/src/webview_python/schemas", import.meta.url).pathname;
 
 async function ensureDir(dir: string) {
   try {

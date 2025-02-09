@@ -1,9 +1,15 @@
-import sys
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "webview-python",
+# ]
+#
+# [tool.uv.sources]
+# webview-python = { path = "../" }
+# ///
 import asyncio
-from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
-from main import WebView, WebViewOptions, WebViewContentHtml, IpcNotification
+from webview_python import WebView, WebViewOptions, WebViewContentHtml, IpcNotification
 
 
 async def main():
@@ -20,14 +26,12 @@ async def main():
             </div>
             """
         ),
-        size={
-            "width": 800,
-            "height": 200
-        },
-        ipc=True
+        size={"width": 800, "height": 200},
+        ipc=True,
     )
 
     async with WebView(config) as webview:
+
         async def handle_ipc(event: IpcNotification):
             message = event.message
             if message == "maximize":
@@ -45,4 +49,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())
+

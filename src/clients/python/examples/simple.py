@@ -1,9 +1,20 @@
-import sys
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "webview-python",
+# ]
+#
+# [tool.uv.sources]
+# webview-python = { path = "../" }
+# ///
 import asyncio
-from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
-from main import WebView, WebViewOptions, WebViewContentHtml, WebViewNotification
+from webview_python import (
+    WebView,
+    WebViewOptions,
+    WebViewContentHtml,
+    WebViewNotification,
+)
 
 
 async def main():
