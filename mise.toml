@@ -36,12 +36,14 @@ description = "Generate the deno client"
 run = "deno run -A scripts/generate-schema/index.ts --language typescript"
 depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
-outputs = ["src/clients/deno/schemas.ts"]
+outputs = ["src/clients/deno/schemas/*.ts"]
 
 [tasks."gen:python"]
 description = "Generate the python client"
 run = "deno run -A scripts/generate-schema/index.ts --language python"
 depends = ["gen:rust"]
+sources = ["schemas/*", "scripts/generate-schema.ts"]
+outputs = ["src/clients/python/src/webview_python/schemas/*.py"]
 
 ## Debug
 
