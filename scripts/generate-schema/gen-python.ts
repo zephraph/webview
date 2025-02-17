@@ -9,12 +9,19 @@ const header = (relativePath: string) =>
   "from typing import Any, Literal, Optional, Union\n" +
   "import msgspec\n\n";
 
+// Track generated definitions to avoid duplicates
+const generatedDefinitions = new Set<string>();
+const generatedDependentClasses = new Set<string>();
+
 export function generatePython(
   doc: Doc,
   name: string,
   relativePath: string,
 ): string {
-  return header(relativePath) + generateTypes(doc, name);
+  // Only include header for the first schema
+  const shouldIncludeHeader = generatedDefinitions.size === 0;
+  const content = generateTypes(doc, name);
+  return (shouldIncludeHeader ? header(relativePath) : "") + content;
 }
 
 function generateTypes(
@@ -25,11 +32,17 @@ function generateTypes(
 
   let definitions = "";
   const skipAssignments = ["object", "intersection", "enum", "union"];
-  for (const [name, definition] of Object.entries(doc.definitions)) {
+  for (const [defName, definition] of Object.entries(doc.definitions)) {
+    // Skip if we've already generated this definition
+    if (generatedDefinitions.has(defName)) {
+      continue;
+    }
+    generatedDefinitions.add(defName);
+
     const definitionWriter = new Writer();
     const { w, wn } = definitionWriter.shorthand();
     if (!skipAssignments.includes(definition.type)) {
-      w(name, " = ");
+      w(defName, " = ");
     }
     generateNode(definition, definitionWriter);
     if (definition.description) {
@@ -88,21 +101,29 @@ function generateNode(node: Node, writer: Writer) {
     .with({ type: "union" }, (node) => {
       const depWriter = new Writer();
       const classes = node.members.map((m) => {
-        if (isComplexType(m)) {
-          generateNode(m, depWriter);
+        let name: string = "";
+        if (m.name) {
+          name = m.name;
+        } else {
+          const ident = m.type === "object"
+            ? m.properties?.find((p) => p.required)?.key ?? ""
+            : "";
+          name = `${node.name}${cap(ident)}`;
         }
-        if (m.name) return m.name;
-        const ident = m.type === "object"
-          ? m.properties?.find((p) => p.required)?.key ?? ""
-          : "";
-        return `${node.name}${cap(ident)}`;
+        if (!generatedDependentClasses.has(name)) {
+          generatedDependentClasses.add(name);
+          if (isComplexType(m)) {
+            generateNode(m, depWriter);
+          }
+        }
+        return name;
       });
       writer.append(depWriter.output());
       wn(`${node.name} = Union[${classes.join(", ")}]`);
     })
     .with({ type: "object" }, (node) => {
       match(context.parent)
-        .with({ type: "union" }, (parent) => {
+        .with({ type: "union" }, () => {
           const name = context.closestName();
           const ident = node.properties.find((p) => p.required)?.key ?? "";
           wn(
@@ -152,28 +173,33 @@ function generateNode(node: Node, writer: Writer) {
         }
         const className = `${cap(name)}${cap(node.name!)}`;
         classes.push(className);
-        dn(
-          `class ${className}(msgspec.Struct, tag_field="${node.descriminator}", tag="${name}"):`,
-        );
-        if (properties.length === 0) {
-          dn("    pass");
-        }
-
-        const sortedProperties = sortByRequired(properties);
-
-        for (const { key, required, description, value } of sortedProperties) {
-          d(`    ${key}: `);
-          if (!required) d("Union[");
-          !isComplexType(value)
-            ? generateNode(value, depWriter)
-            : d(value.name ?? value.type);
-          if (!required) d(", None] = None");
-          dn("");
-          if (description) {
-            dn(`    """${description}"""`);
+        if (!generatedDependentClasses.has(className)) {
+          generatedDependentClasses.add(className);
+          dn(
+            `class ${className}(msgspec.Struct, tag_field="${node.descriminator}", tag="${name}"):`,
+          );
+          if (properties.length === 0) {
+            dn("    pass");
           }
+
+          const sortedProperties = sortByRequired(properties);
+
+          for (
+            const { key, required, description, value } of sortedProperties
+          ) {
+            d(`    ${key}: `);
+            if (!required) d("Union[");
+            !isComplexType(value)
+              ? generateNode(value, depWriter)
+              : d(value.name ?? value.type);
+            if (!required) d(", None] = None");
+            dn("");
+            if (description) {
+              dn(`    """${description}"""`);
+            }
+          }
+          dn("");
         }
-        dn("");
       }
       w(classes.join(", "));
       writer.prepend(depWriter.output());

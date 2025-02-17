@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 # Import schemas
-from .schemas.WebViewMessage import (
+from .schemas import (
     NotificationMessage,
     ResponseMessage,
     StartedNotification,
@@ -38,8 +38,6 @@ from .schemas.WebViewMessage import (
     Notification as WebViewNotification,
     Message as WebViewMessage,
     IpcNotification,
-)
-from .schemas.WebViewRequest import (
     Request as WebViewRequest,
     GetVersionRequest,
     EvalRequest,
