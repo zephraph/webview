@@ -55,14 +55,16 @@ function generateTypes(
 
   const { w, wn } = writer.shorthand();
 
-  if (!skipAssignments.includes(doc.root.type)) {
-    w(name, " = ");
-  }
-  generateNode(doc.root, writer);
-  if (doc.description && doc.root.type !== "object") {
-    wn('"""');
-    wn(`${doc.description}`);
-    wn('"""');
+  if (!generatedDefinitions.has(name)) {
+    if (!skipAssignments.includes(doc.root.type)) {
+      w(name, " = ");
+    }
+    generateNode(doc.root, writer);
+    if (doc.description && doc.root.type !== "object") {
+      wn('"""');
+      wn(`${doc.description}`);
+      wn('"""');
+    }
   }
 
   return definitions + writer.output();

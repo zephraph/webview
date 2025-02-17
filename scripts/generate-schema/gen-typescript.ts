@@ -43,14 +43,16 @@ function generateTypes(doc: Doc, typeName: string) {
     wn("");
   }
 
-  if (doc.description) {
-    wn("/**");
-    wn(` * ${doc.description}`);
-    wn(" */");
+  if (!generatedTypeDefinitions.has(typeName)) {
+    if (doc.description) {
+      wn("/**");
+      wn(` * ${doc.description}`);
+      wn(" */");
+    }
+    wn("export type", typeName, " = ");
+    generateNode(doc.root);
+    wn("");
   }
-  wn("export type", typeName, " = ");
-  generateNode(doc.root);
-  wn("");
 
   function generateNode(node: Node) {
     match(node)
@@ -147,9 +149,11 @@ export function generateZodSchema(doc: Doc, name: string) {
     wn("");
   }
 
-  wn("export const", name, `: z.ZodType<${name}> =`);
-  generateNode(doc.root);
-  wn("");
+  if (!generatedZodDefinitions.has(name)) {
+    wn("export const", name, `: z.ZodType<${name}> =`);
+    generateNode(doc.root);
+    wn("");
+  }
 
   function generateNode(node: Node) {
     match(node)
