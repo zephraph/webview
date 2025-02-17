@@ -7,6 +7,7 @@ uv = "0.6.0"
 
 [settings]
 experimental = true
+pin = true
 
 [tasks."ci:install-deps"]
 hide = true
