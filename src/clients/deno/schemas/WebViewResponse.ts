@@ -38,7 +38,7 @@ export type ResultType =
 /**
  * Responses from the webview to the client.
  */
-export type WebViewResponse =
+export type Response =
   | {
     $type: "ack";
 
@@ -72,15 +72,8 @@ export const ResultType: z.ZodType<ResultType> = z.discriminatedUnion("$type", [
   z.object({ $type: z.literal("size"), value: SizeWithScale }),
 ]);
 
-export const WebViewResponse: z.ZodType<WebViewResponse> = z.discriminatedUnion(
-  "$type",
-  [
-    z.object({ $type: z.literal("ack"), id: z.string() }),
-    z.object({
-      $type: z.literal("result"),
-      id: z.string(),
-      result: ResultType,
-    }),
-    z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
-  ],
-);
+export const Response: z.ZodType<Response> = z.discriminatedUnion("$type", [
+  z.object({ $type: z.literal("ack"), id: z.string() }),
+  z.object({ $type: z.literal("result"), id: z.string(), result: ResultType }),
+  z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
+]);

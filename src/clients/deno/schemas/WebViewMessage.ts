@@ -80,7 +80,7 @@ export type Response =
 /**
  * Complete definition of all outbound messages from the webview to the client.
  */
-export type WebViewMessage =
+export type Message =
   | {
     $type: "notification";
 
@@ -120,10 +120,7 @@ export const Response: z.ZodType<Response> = z.discriminatedUnion("$type", [
   z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
 ]);
 
-export const WebViewMessage: z.ZodType<WebViewMessage> = z.discriminatedUnion(
-  "$type",
-  [
-    z.object({ $type: z.literal("notification"), data: Notification }),
-    z.object({ $type: z.literal("response"), data: Response }),
-  ],
-);
+export const Message: z.ZodType<Message> = z.discriminatedUnion("$type", [
+  z.object({ $type: z.literal("notification"), data: Notification }),
+  z.object({ $type: z.literal("response"), data: Response }),
+]);

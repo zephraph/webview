@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "WebViewOptions",
+  "title": "Options",
   "description": "Options for creating a webview.",
   "type": "object",
   "required": [
@@ -59,7 +59,7 @@
       "description": "The content to load into the webview.",
       "anyOf": [
         {
-          "$ref": "#/definitions/WebViewContent"
+          "$ref": "#/definitions/Content"
         },
         {
           "type": "null"
@@ -96,26 +96,7 @@
     }
   },
   "definitions": {
-    "Size": {
-      "type": "object",
-      "required": [
-        "height",
-        "width"
-      ],
-      "properties": {
-        "height": {
-          "description": "The height of the window in logical pixels.",
-          "type": "number",
-          "format": "double"
-        },
-        "width": {
-          "description": "The width of the window in logical pixels.",
-          "type": "number",
-          "format": "double"
-        }
-      }
-    },
-    "WebViewContent": {
+    "Content": {
       "description": "The content to load into the webview.",
       "anyOf": [
         {
@@ -158,6 +139,25 @@
           }
         }
       ]
+    },
+    "Size": {
+      "type": "object",
+      "required": [
+        "height",
+        "width"
+      ],
+      "properties": {
+        "height": {
+          "description": "The height of the window in logical pixels.",
+          "type": "number",
+          "format": "double"
+        },
+        "width": {
+          "description": "The width of the window in logical pixels.",
+          "type": "number",
+          "format": "double"
+        }
+      }
     },
     "WindowSize": {
       "anyOf": [
