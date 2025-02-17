@@ -2,6 +2,8 @@
 deno = "2.1.9"
 "npm:@ast-grep/cli" = "0.32.2"
 rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
+ruff = "0.9.1"
+uv = "0.5.20"
 
 [settings]
 experimental = true
@@ -35,6 +37,11 @@ run = "deno run -A scripts/generate-schema/index.ts --language typescript"
 depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
 outputs = ["src/clients/deno/schemas.ts"]
+
+[tasks."gen:python"]
+description = "Generate the python client"
+run = "deno run -A scripts/generate-schema/index.ts --language python"
+depends = ["gen:rust"]
 
 ## Debug
 
@@ -76,8 +83,12 @@ outputs = ["target/debug/webview"]
 depends = ["gen:rust"]
 
 [tasks."build:deno"]
-description = "Run code gen and ensure the binary is built"
+description = "Run code gen for deno and ensure the binary is built"
 depends = ["gen:deno", "build:rust"]
+
+[tasks."build:python"]
+description = "Run code gen for python and ensure the binary is built"
+depends = ["gen:python", "build:rust"]
 
 [tasks.build]
 description = "Build all targets"
@@ -110,6 +121,13 @@ description = "Run all linting tasks"
 depends = ["lint:*"]
 
 ## Example
+
+[tasks."example:python"]
+description = "Run a python example"
+depends = ["build:python"]
+dir = "src/clients/python"
+run = "uv run examples/{{arg(name=\"example\")}}.py"
+env = { LOG_LEVEL = "debug", WEBVIEW_BIN = "../../../target/debug/webview" }
 
 [tasks."example:deno"]
 description = "Run a deno example"

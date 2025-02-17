@@ -9,6 +9,10 @@ export class Writer {
     this.append(...t, "\n");
   }
 
+  prepend(...t: (string | false | undefined | null | 0)[]) {
+    this.buffer = t.filter((t) => t).join(" ") + this.buffer;
+  }
+
   shorthand() {
     return {
       w: this.append.bind(this),
