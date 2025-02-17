@@ -2,6 +2,10 @@ name: Rust Binary
 
 on:
   push:
+    paths:
+      - 'src/**/*rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
 
 jobs:
   build:
