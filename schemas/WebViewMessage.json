@@ -115,7 +115,8 @@
               ]
             },
             "id": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         },
@@ -134,7 +135,8 @@
               ]
             },
             "id": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             },
             "result": {
               "$ref": "#/definitions/ResultType"
@@ -156,7 +158,8 @@
               ]
             },
             "id": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             },
             "message": {
               "type": "string"

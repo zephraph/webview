@@ -43,14 +43,14 @@ ResultType  = Union[StringResultType, BooleanResultType, FloatResultType, SizeRe
 Types that can be returned from webview results. 
 """ 
 class AckResponse(msgspec.Struct, tag_field="$type", tag="ack"): 
-    id: str
+    id: int
 
 class ResultResponse(msgspec.Struct, tag_field="$type", tag="result"): 
-    id: str
+    id: int
     result: ResultType
 
 class ErrResponse(msgspec.Struct, tag_field="$type", tag="err"): 
-    id: str
+    id: int
     message: str
 
 Response  = Union[AckResponse, ResultResponse, ErrResponse] 
@@ -140,65 +140,65 @@ Platform-specific: - Windows: Requires WebView2 Runtime version 101.0.1210.39 or
 
 
 class GetVersionRequest(msgspec.Struct, tag_field="$type", tag="getVersion"): 
-    id: str
+    id: int
     """The id of the request.""" 
 
 class EvalRequest(msgspec.Struct, tag_field="$type", tag="eval"): 
-    id: str
+    id: int
     """The id of the request.""" 
     js: str
     """The javascript to evaluate.""" 
 
 class SetTitleRequest(msgspec.Struct, tag_field="$type", tag="setTitle"): 
-    id: str
+    id: int
     """The id of the request.""" 
     title: str
     """The title to set.""" 
 
 class GetTitleRequest(msgspec.Struct, tag_field="$type", tag="getTitle"): 
-    id: str
+    id: int
     """The id of the request.""" 
 
 class SetVisibilityRequest(msgspec.Struct, tag_field="$type", tag="setVisibility"): 
-    id: str
+    id: int
     """The id of the request.""" 
     visible: bool
     """Whether the window should be visible or hidden.""" 
 
 class IsVisibleRequest(msgspec.Struct, tag_field="$type", tag="isVisible"): 
-    id: str
+    id: int
     """The id of the request.""" 
 
 class OpenDevToolsRequest(msgspec.Struct, tag_field="$type", tag="openDevTools"): 
-    id: str
+    id: int
     """The id of the request.""" 
 
 class GetSizeRequest(msgspec.Struct, tag_field="$type", tag="getSize"): 
-    id: str
+    id: int
     """The id of the request.""" 
     include_decorations: Union[bool, None] = None
     """Whether to include the title bar and borders in the size measurement.""" 
 
 class SetSizeRequest(msgspec.Struct, tag_field="$type", tag="setSize"): 
-    id: str
+    id: int
     """The id of the request.""" 
     size: Size
     """The size to set.""" 
 
 class FullscreenRequest(msgspec.Struct, tag_field="$type", tag="fullscreen"): 
-    id: str
+    id: int
     """The id of the request.""" 
     fullscreen: Union[bool, None] = None
     """Whether to enter fullscreen mode. If left unspecified, the window will enter fullscreen mode if it is not already in fullscreen mode or exit fullscreen mode if it is currently in fullscreen mode.""" 
 
 class MaximizeRequest(msgspec.Struct, tag_field="$type", tag="maximize"): 
-    id: str
+    id: int
     """The id of the request.""" 
     maximized: Union[bool, None] = None
     """Whether to maximize the window. If left unspecified, the window will be maximized if it is not already maximized or restored if it was previously maximized.""" 
 
 class MinimizeRequest(msgspec.Struct, tag_field="$type", tag="minimize"): 
-    id: str
+    id: int
     """The id of the request.""" 
     minimized: Union[bool, None] = None
     """Whether to minimize the window. If left unspecified, the window will be minimized if it is not already minimized or restored if it was previously minimized.""" 
@@ -206,13 +206,13 @@ class MinimizeRequest(msgspec.Struct, tag_field="$type", tag="minimize"):
 class LoadHtmlRequest(msgspec.Struct, tag_field="$type", tag="loadHtml"): 
     html: str
     """HTML to set as the content of the webview.""" 
-    id: str
+    id: int
     """The id of the request.""" 
     origin: Union[str, None] = None
     """What to set as the origin of the webview when loading html. If not specified, the origin will be set to the value of the `origin` field when the webview was created.""" 
 
 class LoadUrlRequest(msgspec.Struct, tag_field="$type", tag="loadUrl"): 
-    id: str
+    id: int
     """The id of the request.""" 
     url: str
     """URL to load in the webview.""" 

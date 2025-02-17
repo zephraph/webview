@@ -11,7 +11,6 @@
     "jsr:@std/internal@1": "1.0.5",
     "jsr:@std/path@^1.0.6": "1.0.8",
     "jsr:@std/path@^1.0.8": "1.0.8",
-    "jsr:@std/ulid@1": "1.0.0",
     "npm:acorn@8.12.0": "8.12.0",
     "npm:type-fest@^4.26.1": "4.30.2",
     "npm:zod@^3.23.8": "3.23.8"
@@ -55,9 +54,6 @@
     },
     "@std/path@1.0.8": {
       "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
-    },
-    "@std/ulid@1.0.0": {
-      "integrity": "d41c3d27a907714413649fee864b7cde8d42ee68437d22b79d5de4f81d808780"
     }
   },
   "npm": {
@@ -80,7 +76,6 @@
       "jsr:@gabriel/ts-pattern@^5.6.2",
       "jsr:@std/fs@^1.0.3",
       "jsr:@std/path@^1.0.6",
-      "jsr:@std/ulid@1",
       "npm:type-fest@^4.26.1",
       "npm:zod@^3.23.8"
     ]
