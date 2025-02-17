@@ -6,7 +6,8 @@
 	"recommendations": [
 		"hverlin.mise-vscode",
 		"denoland.vscode-deno",
-		"charliermarsh.ruff"
+		"charliermarsh.ruff",
+		"Swellaby.workspace-config-plus"
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": [
