@@ -1,16 +1,16 @@
-import { walk } from "https://deno.land/std@0.190.0/fs/walk.ts";
-import { basename, join } from "https://deno.land/std@0.190.0/path/mod.ts";
-import { parse } from "https://deno.land/std@0.190.0/flags/mod.ts";
+import { walk } from "jsr:@std/fs/walk";
+import { join } from "jsr:@std/path";
+import { parseArgs } from "jsr:@std/cli/parse-args";
 import type { JSONSchema } from "../../json-schema.d.ts";
 import { generateTypeScript } from "./gen-typescript.ts";
 import { generatePython } from "./gen-python.ts";
 import { parseSchema } from "./parser.ts";
 
 const schemasDir = new URL("../../schemas", import.meta.url).pathname;
-const tsSchemaDir =
-  new URL("../../src/clients/deno/schemas", import.meta.url).pathname;
+const tsSchemaDir = new URL("../../src/clients/deno", import.meta.url).pathname;
 const pySchemaDir =
-  new URL("../../src/clients/python/src/webview_python/schemas", import.meta.url).pathname;
+  new URL("../../src/clients/python/src/webview_python", import.meta.url)
+    .pathname;
 
 async function ensureDir(dir: string) {
   try {
@@ -23,7 +23,7 @@ async function ensureDir(dir: string) {
 }
 
 async function main() {
-  const flags = parse(Deno.args, {
+  const flags = parseArgs(Deno.args, {
     string: ["language"],
     alias: { language: "l" },
   });
@@ -55,31 +55,34 @@ async function main() {
   // Sort files so that the generated code is deterministic
   const files = entries.sort((a, b) => a.path < b.path ? -1 : 1);
 
+  // Collect all schemas first
+  const schemas = [];
   for (const file of files) {
     const jsonSchema: JSONSchema = JSON.parse(
       await Deno.readTextFile(file.path),
     );
-
-    const name = basename(file.name, ".json");
     const doc = parseSchema(jsonSchema);
+    schemas.push(doc);
+  }
 
-    if (!language || language === "typescript") {
-      const tsContent = generateTypeScript(
-        doc,
-        doc.title,
-        relativePath,
-      );
-      const tsFilePath = join(tsSchemaDir, `${name}.ts`);
-      await Deno.writeTextFile(tsFilePath, tsContent);
-      console.log(`Generated TypeScript schema: ${tsFilePath}`);
-    }
+  if (!language || language === "typescript") {
+    // Generate single TypeScript file with all schemas
+    const tsContent = schemas.map((doc) =>
+      generateTypeScript(doc, doc.title, relativePath)
+    ).join("\n\n\n");
+    const tsFilePath = join(tsSchemaDir, "schemas.ts");
+    await Deno.writeTextFile(tsFilePath, tsContent);
+    console.log(`Generated TypeScript schemas: ${tsFilePath}`);
+  }
 
-    if (!language || language === "python") {
-      const pyContent = generatePython(doc, doc.title, relativePath);
-      const pyFilePath = join(pySchemaDir, `${name}.py`);
-      await Deno.writeTextFile(pyFilePath, pyContent);
-      console.log(`Generated Python schema: ${pyFilePath}`);
-    }
+  if (!language || language === "python") {
+    // Generate single Python file with all schemas
+    const pyContent = schemas.map((doc) =>
+      generatePython(doc, doc.title, relativePath)
+    ).join("\n\n\n");
+    const pyFilePath = join(pySchemaDir, "schemas.py");
+    await Deno.writeTextFile(pyFilePath, pyContent);
+    console.log(`Generated Python schemas: ${pyFilePath}`);
   }
 
   // Run deno fmt on TypeScript files if they were generated
