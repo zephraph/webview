@@ -10,6 +10,17 @@ from pyee.asyncio import AsyncIOEventEmitter
 import msgspec
 import sys
 
+__all__ = [
+    "WebViewMessage",
+    "WebViewRequest",
+    "WebViewOptions",
+    "WebViewContentHtml",
+    "WebViewContentUrl",
+    "WebViewNotification",
+    "WebViewResponse",
+    "IpcNotification",
+]
+
 # Import schemas
 from .schemas.WebViewMessage import (
     NotificationMessage,
@@ -25,10 +36,11 @@ from .schemas.WebViewMessage import (
     ErrResponse,
     Response as WebViewResponse,
     Notification as WebViewNotification,
-    WebViewMessage,
+    Message as WebViewMessage,
+    IpcNotification,
 )
 from .schemas.WebViewRequest import (
-    WebViewRequest,
+    Request as WebViewRequest,
     GetVersionRequest,
     EvalRequest,
     SetTitleRequest,
@@ -46,9 +58,9 @@ from .schemas.WebViewRequest import (
     Size,
 )
 from .schemas.WebViewOptions import (
-    WebViewOptions,
-    WebViewContentHtml,
-    WebViewContentUrl,
+    Options as WebViewOptions,
+    ContentHtml as WebViewContentHtml,
+    ContentUrl as WebViewContentUrl,
 )
 
 # Constants
