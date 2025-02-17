@@ -23,10 +23,12 @@
  */
 
 import { EventEmitter } from "node:events";
-import { Message } from "./schemas/WebViewMessage.ts";
-import type { Options } from "./schemas/WebViewOptions.ts";
-import type { Request as WebViewRequest } from "./schemas/WebViewRequest.ts";
-import { Response as WebViewResponse } from "./schemas/WebViewResponse.ts";
+import {
+  Message,
+  type Options,
+  type Request as WebViewRequest,
+  Response as WebViewResponse,
+} from "./schemas.ts";
 import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except, Simplify } from "npm:type-fest";
 import { join } from "jsr:@std/path";
@@ -50,7 +52,7 @@ if (
   FmtSubscriber.setGlobalDefault({ level, color: true });
 }
 
-export type { Options } from "./schemas/WebViewOptions.ts";
+export * from "./schemas.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
