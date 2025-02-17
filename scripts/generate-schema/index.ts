@@ -1,6 +1,6 @@
-import { walk } from "https://deno.land/std@0.190.0/fs/walk.ts";
-import { basename, join } from "https://deno.land/std@0.190.0/path/mod.ts";
-import { parse } from "https://deno.land/std@0.190.0/flags/mod.ts";
+import { walk } from "jsr:@std/fs/walk";
+import { join } from "jsr:@std/path";
+import { parseArgs } from "jsr:@std/cli/parse-args";
 import type { JSONSchema } from "../../json-schema.d.ts";
 import { generateTypeScript } from "./gen-typescript.ts";
 import { generatePython } from "./gen-python.ts";
@@ -23,7 +23,7 @@ async function ensureDir(dir: string) {
 }
 
 async function main() {
-  const flags = parse(Deno.args, {
+  const flags = parseArgs(Deno.args, {
     string: ["language"],
     alias: { language: "l" },
   });
