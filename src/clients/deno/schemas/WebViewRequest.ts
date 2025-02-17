@@ -11,7 +11,7 @@ export type Size = {
 /**
  * Explicit requests from the client to the webview.
  */
-export type WebViewRequest =
+export type Request =
   | {
     $type: "getVersion";
     /** The id of the request. */
@@ -112,56 +112,49 @@ export const Size: z.ZodType<Size> = z.object({
   width: z.number(),
 });
 
-export const WebViewRequest: z.ZodType<WebViewRequest> = z.discriminatedUnion(
-  "$type",
-  [
-    z.object({ $type: z.literal("getVersion"), id: z.string() }),
-    z.object({ $type: z.literal("eval"), id: z.string(), js: z.string() }),
-    z.object({
-      $type: z.literal("setTitle"),
-      id: z.string(),
-      title: z.string(),
-    }),
-    z.object({ $type: z.literal("getTitle"), id: z.string() }),
-    z.object({
-      $type: z.literal("setVisibility"),
-      id: z.string(),
-      visible: z.boolean(),
-    }),
-    z.object({ $type: z.literal("isVisible"), id: z.string() }),
-    z.object({ $type: z.literal("openDevTools"), id: z.string() }),
-    z.object({
-      $type: z.literal("getSize"),
-      id: z.string(),
-      include_decorations: z.boolean().optional(),
-    }),
-    z.object({ $type: z.literal("setSize"), id: z.string(), size: Size }),
-    z.object({
-      $type: z.literal("fullscreen"),
-      fullscreen: z.boolean().optional(),
-      id: z.string(),
-    }),
-    z.object({
-      $type: z.literal("maximize"),
-      id: z.string(),
-      maximized: z.boolean().optional(),
-    }),
-    z.object({
-      $type: z.literal("minimize"),
-      id: z.string(),
-      minimized: z.boolean().optional(),
-    }),
-    z.object({
-      $type: z.literal("loadHtml"),
-      html: z.string(),
-      id: z.string(),
-      origin: z.string().optional(),
-    }),
-    z.object({
-      $type: z.literal("loadUrl"),
-      headers: z.record(z.string(), z.string()).optional(),
-      id: z.string(),
-      url: z.string(),
-    }),
-  ],
-);
+export const Request: z.ZodType<Request> = z.discriminatedUnion("$type", [
+  z.object({ $type: z.literal("getVersion"), id: z.string() }),
+  z.object({ $type: z.literal("eval"), id: z.string(), js: z.string() }),
+  z.object({ $type: z.literal("setTitle"), id: z.string(), title: z.string() }),
+  z.object({ $type: z.literal("getTitle"), id: z.string() }),
+  z.object({
+    $type: z.literal("setVisibility"),
+    id: z.string(),
+    visible: z.boolean(),
+  }),
+  z.object({ $type: z.literal("isVisible"), id: z.string() }),
+  z.object({ $type: z.literal("openDevTools"), id: z.string() }),
+  z.object({
+    $type: z.literal("getSize"),
+    id: z.string(),
+    include_decorations: z.boolean().optional(),
+  }),
+  z.object({ $type: z.literal("setSize"), id: z.string(), size: Size }),
+  z.object({
+    $type: z.literal("fullscreen"),
+    fullscreen: z.boolean().optional(),
+    id: z.string(),
+  }),
+  z.object({
+    $type: z.literal("maximize"),
+    id: z.string(),
+    maximized: z.boolean().optional(),
+  }),
+  z.object({
+    $type: z.literal("minimize"),
+    id: z.string(),
+    minimized: z.boolean().optional(),
+  }),
+  z.object({
+    $type: z.literal("loadHtml"),
+    html: z.string(),
+    id: z.string(),
+    origin: z.string().optional(),
+  }),
+  z.object({
+    $type: z.literal("loadUrl"),
+    headers: z.record(z.string(), z.string()).optional(),
+    id: z.string(),
+    url: z.string(),
+  }),
+]);

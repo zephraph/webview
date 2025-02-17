@@ -23,10 +23,10 @@
  */
 
 import { EventEmitter } from "node:events";
-import { WebViewMessage } from "./schemas/WebViewMessage.ts";
-import type { WebViewOptions } from "./schemas/WebViewOptions.ts";
-import type { WebViewRequest } from "./schemas/WebViewRequest.ts";
-import { WebViewResponse } from "./schemas/WebViewResponse.ts";
+import { Message } from "./schemas/WebViewMessage.ts";
+import type { Options } from "./schemas/WebViewOptions.ts";
+import type { Request as WebViewRequest } from "./schemas/WebViewRequest.ts";
+import { Response as WebViewResponse } from "./schemas/WebViewResponse.ts";
 import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except, Simplify } from "npm:type-fest";
 import { join } from "jsr:@std/path";
@@ -50,14 +50,14 @@ if (
   FmtSubscriber.setGlobalDefault({ level, color: true });
 }
 
-export type { WebViewOptions } from "./schemas/WebViewOptions.ts";
+export type { Options } from "./schemas/WebViewOptions.ts";
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
 export const BIN_VERSION = "0.1.14";
 
 type WebViewNotification = Extract<
-  WebViewMessage,
+  Message,
   { $type: "notification" }
 >["data"];
 
@@ -102,7 +102,7 @@ const returnAck = (result: WebViewResponse) => {
     });
 };
 
-async function getWebViewBin(options: WebViewOptions) {
+async function getWebViewBin(options: Options) {
   if (
     Deno.permissions.querySync({ name: "env", variable: "WEBVIEW_BIN" })
       .state === "granted"
@@ -177,7 +177,7 @@ function getCacheDir(): string {
  *
  * Will automatically fetch the webview binary if it's not already downloaded
  */
-export async function createWebView(options: WebViewOptions): Promise<WebView> {
+export async function createWebView(options: Options): Promise<WebView> {
   const binPath = await getWebViewBin(options);
   return new WebView(options, binPath);
 }
@@ -197,7 +197,7 @@ export class WebView implements Disposable {
   #internalEvent = new EventEmitter();
   #externalEvent = new EventEmitter();
   #messageLoop: Promise<void>;
-  #options: WebViewOptions;
+  #options: Options;
 
   /**
    * Creates a new webview window.
@@ -205,7 +205,7 @@ export class WebView implements Disposable {
    * @param options - The options for the webview.
    * @param webviewBinaryPath - The path to the webview binary.
    */
-  constructor(options: WebViewOptions, webviewBinaryPath: string) {
+  constructor(options: Options, webviewBinaryPath: string) {
     this.#options = options;
     this.#process = new Deno.Command(webviewBinaryPath, {
       args: [JSON.stringify(options)],
@@ -252,7 +252,7 @@ export class WebView implements Disposable {
         continue;
       }
       trace("buffer", { buffer: this.#buffer });
-      const result = WebViewMessage.safeParse(
+      const result = Message.safeParse(
         JSON.parse(this.#buffer.slice(0, newlineIndex)),
       );
       this.#buffer = this.#buffer.slice(newlineIndex + 1);

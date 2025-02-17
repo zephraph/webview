@@ -1,11 +1,11 @@
 use schemars::schema_for;
 use std::fs::File;
 use std::io::Write;
-use webview::{Message, Request, Response, WebViewOptions};
+use webview::{Message, Options, Request, Response};
 
 fn main() {
     let schemas = [
-        ("WebViewOptions", schema_for!(WebViewOptions)),
+        ("WebViewOptions", schema_for!(Options)),
         ("WebViewMessage", schema_for!(Message)),
         ("WebViewRequest", schema_for!(Request)),
         ("WebViewResponse", schema_for!(Response)),

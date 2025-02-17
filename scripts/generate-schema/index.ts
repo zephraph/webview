@@ -56,7 +56,7 @@ async function main() {
     if (!language || language === "typescript") {
       const tsContent = generateTypeScript(
         doc,
-        name,
+        doc.title,
         relativePath,
       );
       const tsFilePath = join(tsSchemaDir, `${name}.ts`);

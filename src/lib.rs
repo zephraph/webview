@@ -67,12 +67,12 @@ pub enum WindowSize {
 /// Options for creating a webview.
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct WebViewOptions {
+pub struct Options {
     /// Sets the title of the window.
     title: String,
     /// The content to load into the webview.
     #[serde(default)]
-    load: Option<WebViewContent>,
+    load: Option<Content>,
     /// The size of the window.
     #[serde(default)]
     size: Option<WindowSize>,
@@ -126,7 +126,7 @@ fn default_true() -> bool {
 #[derive(JsonSchema, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(untagged)]
-pub enum WebViewContent {
+pub enum Content {
     Url {
         /// Url to load in the webview. Note: Don't use data URLs here, as they are not supported. Use the `html` field instead.
         url: String,
@@ -409,7 +409,7 @@ fn process_output<W: Write + std::marker::Send + 'static>(
     });
 }
 
-pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
+pub fn run(webview_options: Options) -> wry::Result<()> {
     info!("Starting webview with options: {:?}", webview_options);
 
     // These two mutexes are used to store the html and origin if the webview is created with html.
@@ -443,7 +443,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
 
     let html_mutex_init = html_mutex.clone();
     let mut webview_builder = match webview_options.load {
-        Some(WebViewContent::Url { url, headers }) => {
+        Some(Content::Url { url, headers }) => {
             let mut webview_builder = WebViewBuilder::new().with_url(url);
             if let Some(headers) = headers {
                 let headers = headers
@@ -459,7 +459,7 @@ pub fn run(webview_options: WebViewOptions) -> wry::Result<()> {
             }
             webview_builder
         }
-        Some(WebViewContent::Html { html, origin }) => {
+        Some(Content::Html { html, origin }) => {
             origin_mutex.lock().clone_from(&origin);
             *html_mutex.lock() = html;
             WebViewBuilder::new().with_url(format!("load-html://{}", origin))

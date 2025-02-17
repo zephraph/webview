@@ -1,6 +1,6 @@
 use std::env;
 use tracing::error;
-use webview::{run, WebViewOptions};
+use webview::{run, Options};
 
 fn main() {
     let subscriber = tracing_subscriber::fmt()
@@ -11,7 +11,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    let webview_options: WebViewOptions = match serde_json::from_str(&args[1]) {
+    let webview_options: Options = match serde_json::from_str(&args[1]) {
         Ok(options) => options,
         Err(e) => {
             error!("Failed to parse webview options: {:?}", e);
