@@ -35,6 +35,8 @@ import { ensureDir, exists } from "jsr:@std/fs";
 import { error, FmtSubscriber, instrument, Level, trace, warn } from "tracing";
 import { match, P } from "ts-pattern";
 
+export * from "./schemas.ts";
+
 if (
   Deno.permissions.querySync({ name: "env", variable: "LOG_LEVEL" }).state ===
     "granted"
@@ -51,11 +53,9 @@ if (
   FmtSubscriber.setGlobalDefault({ level, color: true });
 }
 
-export * from "./schemas.ts";
-
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.1.14";
+export const BIN_VERSION = "0.2.0";
 
 type WebViewNotification = Extract<
   Message,

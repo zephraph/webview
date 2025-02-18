@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0-rc.1 Deno Client; 0.2.0 binary -- 2025-02-17
+
+- Added new logging that can be triggered with the `LOG_LEVEL` environment variable
+
+- [BREAKING] Changed some typenames/zod schemas not to include `Webview` in the name. 
+- [BREAKING] Updated code generation to support multiple clients which necessitated a breaking change for the Deno client. 
+
+  ```diff
+  using webview = await createWebView({
+    title: "Simple",
+    devtools: true,
+  +  load: {
+      html: "<h1>Hello, World!</h1>",
+  +  },
+    initializationScript:
+      "console.log('This is printed from initializationScript!')",
+  });
+  ```
+  `html` or `url` must be wrapped in an object and passed to `load`. 
+
 ## 0.0.17 (binary 0.1.14) -- 2024-10-02
 
 - Add `webview.loadUrl` to load a new URL after the webview is initialized
