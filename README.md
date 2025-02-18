@@ -41,12 +41,12 @@ When executing this package, it checks to see if you have the required binary fo
 This will be true of a first run of the package. These are the following permission requests you can expect to see:
 
 - Read HOME env -- Used to locate the cache directory
-- Read <cache>/deno-webview/deno-webview-<version> -- Tries to read the binary from cache
+- Read <cache>/webview/webview-<version> -- Tries to read the binary from cache
 - net to github.com:443 -- Connects to GitHub releases to try to download the binary (will be redirected)
 - net to objects.githubusercontent.com:443 -- GitHub's CDN for the actual download
-- Read <cache>/deno-webview/ -- Reads the cache directory
-- Write <cache>/deno-webview/deno-webview-<version> -- Writes the binary
-- Run <cache>/deno-webview/deno-webview-<version> -- Runs the binary
+- Read <cache>/webview/ -- Reads the cache directory
+- Write <cache>/webview/webview-<version> -- Writes the binary
+- Run <cache>/webview/webview-<version> -- Runs the binary
 
 ### Binary cached
 
