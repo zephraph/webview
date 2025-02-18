@@ -60,19 +60,19 @@ export type Response =
   | {
     $type: "ack";
 
-    id: string;
+    id: number;
   }
   | {
     $type: "result";
 
-    id: string;
+    id: number;
 
     result: ResultType;
   }
   | {
     $type: "err";
 
-    id: string;
+    id: number;
 
     message: string;
   };
@@ -115,9 +115,17 @@ export const ResultType: z.ZodType<ResultType> = z.discriminatedUnion("$type", [
 ]);
 
 export const Response: z.ZodType<Response> = z.discriminatedUnion("$type", [
-  z.object({ $type: z.literal("ack"), id: z.string() }),
-  z.object({ $type: z.literal("result"), id: z.string(), result: ResultType }),
-  z.object({ $type: z.literal("err"), id: z.string(), message: z.string() }),
+  z.object({ $type: z.literal("ack"), id: z.number().int() }),
+  z.object({
+    $type: z.literal("result"),
+    id: z.number().int(),
+    result: ResultType,
+  }),
+  z.object({
+    $type: z.literal("err"),
+    id: z.number().int(),
+    message: z.string(),
+  }),
 ]);
 
 export const Message: z.ZodType<Message> = z.discriminatedUnion("$type", [
@@ -244,55 +252,55 @@ export type Request =
   | {
     $type: "getVersion";
     /** The id of the request. */
-    id: string;
+    id: number;
   }
   | {
     $type: "eval";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** The javascript to evaluate. */
     js: string;
   }
   | {
     $type: "setTitle";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** The title to set. */
     title: string;
   }
   | {
     $type: "getTitle";
     /** The id of the request. */
-    id: string;
+    id: number;
   }
   | {
     $type: "setVisibility";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** Whether the window should be visible or hidden. */
     visible: boolean;
   }
   | {
     $type: "isVisible";
     /** The id of the request. */
-    id: string;
+    id: number;
   }
   | {
     $type: "openDevTools";
     /** The id of the request. */
-    id: string;
+    id: number;
   }
   | {
     $type: "getSize";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** Whether to include the title bar and borders in the size measurement. */
     include_decorations?: boolean;
   }
   | {
     $type: "setSize";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** The size to set. */
     size: Size;
   }
@@ -301,19 +309,19 @@ export type Request =
     /** Whether to enter fullscreen mode. If left unspecified, the window will enter fullscreen mode if it is not already in fullscreen mode or exit fullscreen mode if it is currently in fullscreen mode. */
     fullscreen?: boolean;
     /** The id of the request. */
-    id: string;
+    id: number;
   }
   | {
     $type: "maximize";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** Whether to maximize the window. If left unspecified, the window will be maximized if it is not already maximized or restored if it was previously maximized. */
     maximized?: boolean;
   }
   | {
     $type: "minimize";
     /** The id of the request. */
-    id: string;
+    id: number;
     /** Whether to minimize the window. If left unspecified, the window will be minimized if it is not already minimized or restored if it was previously minimized. */
     minimized?: boolean;
   }
@@ -322,7 +330,7 @@ export type Request =
     /** HTML to set as the content of the webview. */
     html: string;
     /** The id of the request. */
-    id: string;
+    id: number;
     /** What to set as the origin of the webview when loading html. If not specified, the origin will be set to the value of the `origin` field when the webview was created. */
     origin?: string;
   }
@@ -331,54 +339,58 @@ export type Request =
     /** Optional headers to send with the request. */
     headers?: Record<string, string>;
     /** The id of the request. */
-    id: string;
+    id: number;
     /** URL to load in the webview. */
     url: string;
   };
 
 export const Request: z.ZodType<Request> = z.discriminatedUnion("$type", [
-  z.object({ $type: z.literal("getVersion"), id: z.string() }),
-  z.object({ $type: z.literal("eval"), id: z.string(), js: z.string() }),
-  z.object({ $type: z.literal("setTitle"), id: z.string(), title: z.string() }),
-  z.object({ $type: z.literal("getTitle"), id: z.string() }),
+  z.object({ $type: z.literal("getVersion"), id: z.number().int() }),
+  z.object({ $type: z.literal("eval"), id: z.number().int(), js: z.string() }),
+  z.object({
+    $type: z.literal("setTitle"),
+    id: z.number().int(),
+    title: z.string(),
+  }),
+  z.object({ $type: z.literal("getTitle"), id: z.number().int() }),
   z.object({
     $type: z.literal("setVisibility"),
-    id: z.string(),
+    id: z.number().int(),
     visible: z.boolean(),
   }),
-  z.object({ $type: z.literal("isVisible"), id: z.string() }),
-  z.object({ $type: z.literal("openDevTools"), id: z.string() }),
+  z.object({ $type: z.literal("isVisible"), id: z.number().int() }),
+  z.object({ $type: z.literal("openDevTools"), id: z.number().int() }),
   z.object({
     $type: z.literal("getSize"),
-    id: z.string(),
+    id: z.number().int(),
     include_decorations: z.boolean().optional(),
   }),
-  z.object({ $type: z.literal("setSize"), id: z.string(), size: Size }),
+  z.object({ $type: z.literal("setSize"), id: z.number().int(), size: Size }),
   z.object({
     $type: z.literal("fullscreen"),
     fullscreen: z.boolean().optional(),
-    id: z.string(),
+    id: z.number().int(),
   }),
   z.object({
     $type: z.literal("maximize"),
-    id: z.string(),
+    id: z.number().int(),
     maximized: z.boolean().optional(),
   }),
   z.object({
     $type: z.literal("minimize"),
-    id: z.string(),
+    id: z.number().int(),
     minimized: z.boolean().optional(),
   }),
   z.object({
     $type: z.literal("loadHtml"),
     html: z.string(),
-    id: z.string(),
+    id: z.number().int(),
     origin: z.string().optional(),
   }),
   z.object({
     $type: z.literal("loadUrl"),
     headers: z.record(z.string(), z.string()).optional(),
-    id: z.string(),
+    id: z.number().int(),
     url: z.string(),
   }),
 ]);

@@ -181,54 +181,54 @@ pub enum Notification {
 pub enum Request {
     GetVersion {
         /// The id of the request.
-        id: String,
+        id: i64,
     },
     Eval {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// The javascript to evaluate.
         js: String,
     },
     SetTitle {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// The title to set.
         title: String,
     },
     GetTitle {
         /// The id of the request.
-        id: String,
+        id: i64,
     },
     SetVisibility {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// Whether the window should be visible or hidden.
         visible: bool,
     },
     IsVisible {
         /// The id of the request.
-        id: String,
+        id: i64,
     },
     OpenDevTools {
         /// The id of the request.
-        id: String,
+        id: i64,
     },
     GetSize {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// Whether to include the title bar and borders in the size measurement.
         #[serde(default)]
         include_decorations: Option<bool>,
     },
     SetSize {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// The size to set.
         size: Size,
     },
     Fullscreen {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// Whether to enter fullscreen mode.
         /// If left unspecified, the window will enter fullscreen mode if it is not already in fullscreen mode
         /// or exit fullscreen mode if it is currently in fullscreen mode.
@@ -236,7 +236,7 @@ pub enum Request {
     },
     Maximize {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// Whether to maximize the window.
         /// If left unspecified, the window will be maximized if it is not already maximized
         /// or restored if it was previously maximized.
@@ -244,7 +244,7 @@ pub enum Request {
     },
     Minimize {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// Whether to minimize the window.
         /// If left unspecified, the window will be minimized if it is not already minimized
         /// or restored if it was previously minimized.
@@ -252,7 +252,7 @@ pub enum Request {
     },
     LoadHtml {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// HTML to set as the content of the webview.
         html: String,
         /// What to set as the origin of the webview when loading html.
@@ -261,7 +261,7 @@ pub enum Request {
     },
     LoadUrl {
         /// The id of the request.
-        id: String,
+        id: i64,
         /// URL to load in the webview.
         url: String,
         /// Optional headers to send with the request.
@@ -274,9 +274,9 @@ pub enum Request {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "$type")]
 pub enum Response {
-    Ack { id: String },
-    Result { id: String, result: ResultType },
-    Err { id: String, message: String },
+    Ack { id: i64 },
+    Result { id: i64, result: ResultType },
+    Err { id: i64, message: String },
 }
 
 /// Types that can be returned from webview results.
@@ -692,9 +692,7 @@ mod tests {
     #[test]
     fn test_process_input_simple() {
         // Create a GetVersion request
-        let request = Request::GetVersion {
-            id: "test-123".to_string(),
-        };
+        let request = Request::GetVersion { id: 0 };
 
         // Serialize to JSON
         let json = serde_json::to_vec(&request).unwrap();
@@ -716,7 +714,7 @@ mod tests {
             Ok(received) => {
                 assert!(matches!(
                     received,
-                    Request::GetVersion { id } if id == "test-123"
+                    Request::GetVersion { id } if id == 0
                 ));
             }
             Err(e) => panic!("Failed to receive message: {:?}", e),
@@ -727,7 +725,7 @@ mod tests {
     fn test_process_input_complex() {
         // Create a SetSize request with nested SimpleSize
         let request = Request::SetSize {
-            id: "size-test".to_string(),
+            id: 0,
             size: Size {
                 width: 800.0,
                 height: 600.0,
@@ -749,7 +747,7 @@ mod tests {
         match receiver.try_recv() {
             Ok(received) => match received {
                 Request::SetSize { id, size } => {
-                    assert_eq!(id, "size-test");
+                    assert_eq!(id, 0);
                     assert_eq!(size.width, 800.0);
                     assert_eq!(size.height, 600.0);
                 }
@@ -769,9 +767,7 @@ mod tests {
         process_output(WriteGuard(output_clone), receiver);
 
         // Create and send a test message
-        let message = Message::Response(Response::Ack {
-            id: "test-123".to_string(),
-        });
+        let message = Message::Response(Response::Ack { id: 0 });
         sender.send(message).unwrap();
 
         // Give the thread a moment to process
@@ -783,7 +779,7 @@ mod tests {
             "$type": "response",
             "data": {
                 "$type": "ack",
-                "id": "test-123"
+                "id": 0
             }
         });
         let expected_str = expected.to_string() + "\n";
@@ -807,18 +803,16 @@ mod tests {
     fn test_process_input_multiple() {
         // Create multiple requests
         let requests = vec![
-            Request::GetVersion {
-                id: "version-1".to_string(),
-            },
+            Request::GetVersion { id: 0 },
             Request::SetSize {
-                id: "size-1".to_string(),
+                id: 0,
                 size: Size {
                     width: 1024.0,
                     height: 768.0,
                 },
             },
             Request::LoadUrl {
-                id: "url-1".to_string(),
+                id: 0,
                 url: "https://example.com".to_string(),
                 headers: Some(HashMap::from([
                     ("User-Agent".to_string(), "test-agent".to_string()),
@@ -903,14 +897,12 @@ mod tests {
 
         // Create and send multiple test messages
         let messages = vec![
-            Message::Response(Response::Ack {
-                id: "test-1".to_string(),
-            }),
+            Message::Response(Response::Ack { id: 0 }),
             Message::Notification(Notification::Started {
                 version: "1.0.0".to_string(),
             }),
             Message::Response(Response::Result {
-                id: "test-2".to_string(),
+                id: 0,
                 result: ResultType::Size(SizeWithScale {
                     width: 800.0,
                     height: 600.0,

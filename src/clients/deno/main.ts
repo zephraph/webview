@@ -29,7 +29,6 @@ import {
   type Request as WebViewRequest,
   Response as WebViewResponse,
 } from "./schemas.ts";
-import { monotonicUlid as ulid } from "jsr:@std/ulid";
 import type { Except, Simplify } from "npm:type-fest";
 import { join } from "jsr:@std/path";
 import { ensureDir, exists } from "jsr:@std/fs";
@@ -200,6 +199,7 @@ export class WebView implements Disposable {
   #externalEvent = new EventEmitter();
   #messageLoop: Promise<void>;
   #options: Options;
+  #messageId = 0;
 
   /**
    * Creates a new webview window.
@@ -221,10 +221,10 @@ export class WebView implements Disposable {
   }
 
   #send(request: Except<WebViewRequest, "id">): Promise<WebViewResponse> {
-    const id = ulid();
+    const id = this.#messageId++;
     return new Promise((resolve) => {
       // Setup listener before sending the message to avoid race conditions
-      this.#internalEvent.once(id, (event) => {
+      this.#internalEvent.once(id.toString(), (event) => {
         const result = WebViewResponse.safeParse(event);
         if (result.success) {
           resolve(result.data);
@@ -288,7 +288,7 @@ export class WebView implements Disposable {
           }
         })
         .with({ $type: "response" }, ({ data }) => {
-          this.#internalEvent.emit(data.id, data);
+          this.#internalEvent.emit(data.id.toString(), data);
         })
         .exhaustive();
     }

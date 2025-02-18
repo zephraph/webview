@@ -18,7 +18,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -38,7 +39,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "js": {
           "description": "The javascript to evaluate.",
@@ -62,7 +64,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "title": {
           "description": "The title to set.",
@@ -85,7 +88,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -105,7 +109,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "visible": {
           "description": "Whether the window should be visible or hidden.",
@@ -128,7 +133,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -147,7 +153,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -166,7 +173,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "include_decorations": {
           "description": "Whether to include the title bar and borders in the size measurement.",
@@ -194,7 +202,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "size": {
           "description": "The size to set.",
@@ -228,7 +237,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -247,7 +257,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "maximized": {
           "description": "Whether to maximize the window. If left unspecified, the window will be maximized if it is not already maximized or restored if it was previously maximized.",
@@ -273,7 +284,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "minimized": {
           "description": "Whether to minimize the window. If left unspecified, the window will be minimized if it is not already minimized or restored if it was previously minimized.",
@@ -304,7 +316,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "origin": {
           "description": "What to set as the origin of the webview when loading html. If not specified, the origin will be set to the value of the `origin` field when the webview was created.",
@@ -341,7 +354,8 @@
         },
         "id": {
           "description": "The id of the request.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "url": {
           "description": "URL to load in the webview.",

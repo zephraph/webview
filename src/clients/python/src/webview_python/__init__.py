@@ -43,6 +43,7 @@ from .schemas import (
     LoadHtmlRequest,
     LoadUrlRequest,
     Size,
+    ContentHtml as WebViewContentHtml,
 )
 
 # Constants
@@ -143,8 +144,8 @@ class WebView:
         self.buffer = b""
 
     @property
-    def message_id(self) -> str:
-        current_id = f"client_{self.__message_id}"
+    def message_id(self) -> int:
+        current_id = self.__message_id
         self.__message_id += 1
         return current_id
 
@@ -254,7 +255,7 @@ class WebView:
                         if isinstance(msg, NotificationMessage):
                             return msg.data
                         elif isinstance(msg, ResponseMessage):
-                            self.internal_event.emit(msg.data.id, msg.data)
+                            self.internal_event.emit(str(msg.data.id), msg.data)
                     except msgspec.DecodeError as e:
                         print(f"Error parsing message: {message}", flush=True)
                         print(f"Parse error details: {str(e)}", flush=True)
