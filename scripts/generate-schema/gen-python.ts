@@ -9,6 +9,28 @@ const header = (relativePath: string) =>
   "from typing import Any, Literal, Optional, Union\n" +
   "import msgspec\n\n";
 
+export function extractExportedNames(content: string): string[] {
+  const names = new Set<string>();
+
+  // Match class definitions and enum assignments
+  const classRegex = /^class\s+([a-zA-Z_][a-zA-Z0-9_]*)/gm;
+  const enumRegex = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*Union\[/gm;
+
+  let match;
+  while ((match = classRegex.exec(content)) !== null) {
+    names.add(match[1]);
+  }
+  while ((match = enumRegex.exec(content)) !== null) {
+    names.add(match[1]);
+  }
+
+  return [...names].sort();
+}
+
+export function generateAll(names: string[]): string {
+  return `__all__ = ${JSON.stringify(names, null, 4)}\n\n`;
+}
+
 // Track generated definitions to avoid duplicates
 const generatedDefinitions = new Set<string>();
 const generatedDependentClasses = new Set<string>();
@@ -21,7 +43,12 @@ export function generatePython(
   // Only include header for the first schema
   const shouldIncludeHeader = generatedDefinitions.size === 0;
   const content = generateTypes(doc, name);
-  return (shouldIncludeHeader ? header(relativePath) : "") + content;
+
+  let output = "";
+  if (shouldIncludeHeader) {
+    output += header(relativePath);
+  }
+  return output + content;
 }
 
 function generateTypes(
