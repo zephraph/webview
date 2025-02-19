@@ -28,7 +28,7 @@ await Deno.writeTextFile(denoPath, updatedDenoContent);
 console.log(`✓ Updated Deno BIN_VERSION to ${latestVersion}`);
 
 // ===== Update Python Client BIN_VERSION =====
-const pythonInitPath = "./src/clients/python/src/webview_python/__init__.py";
+const pythonInitPath = "./src/clients/python/src/justbe_webview/__init__.py";
 const pythonInitContent = await Deno.readTextFile(pythonInitPath);
 
 const updatedPythonInitContent = pythonInitContent.replace(

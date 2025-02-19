@@ -1,29 +1,27 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "webview-python",
+#     "justbe-webview",
 # ]
 #
 # [tool.uv.sources]
-# webview-python = { path = "../" }
+# justbe-webview = { path = "../" }
 # ///
-import sys
 import asyncio
-from pathlib import Path
 
-from webview_python import (
+from justbe_webview import (
     WebView,
-    WebViewOptions,
-    WebViewContentHtml,
-    WebViewNotification,
+    Options,
+    ContentHtml,
+    Notification,
 )
 
 
 async def main():
     print("Creating webview")
-    config = WebViewOptions(
+    config = Options(
         title="Load Html Example",
-        load=WebViewContentHtml(
+        load=ContentHtml(
             html="<h1>Initial html</h1>",
             # Note: This origin is used with a custom protocol so it doesn't match
             # https://example.com. This doesn't need to be set, but can be useful if
@@ -36,7 +34,7 @@ async def main():
 
     async with WebView(config) as webview:
 
-        async def handle_start(event: WebViewNotification):
+        async def handle_start(event: Notification):
             await webview.open_devtools()
             await webview.load_html("<h1>Updated html!</h1>")
 
@@ -47,4 +45,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

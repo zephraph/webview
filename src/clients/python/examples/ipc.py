@@ -1,23 +1,22 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "webview-python",
+#     "justbe-webview",
 # ]
 #
 # [tool.uv.sources]
-# webview-python = { path = "../" }
+# justbe-webview = { path = "../" }
 # ///
 import asyncio
 
-from webview_python import WebView, WebViewOptions, WebViewContentHtml
-from webview_python.schemas.WebViewMessage import IpcNotification
+from justbe_webview import WebView, Options, ContentHtml, IpcNotification
 
 
 async def main():
     print("Creating webview")
-    config = WebViewOptions(
+    config = Options(
         title="Simple",
-        load=WebViewContentHtml(
+        load=ContentHtml(
             html='<button onclick="window.ipc.postMessage(`button clicked ${Date.now()}`)">Click me</button>'
         ),
         ipc=True,

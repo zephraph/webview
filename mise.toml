@@ -44,7 +44,7 @@ description = "Generate the python client"
 run = "deno run -A scripts/generate-schema/index.ts --language python"
 depends = ["gen:rust"]
 sources = ["schemas/*", "scripts/generate-schema.ts"]
-outputs = ["src/clients/python/src/webview_python/schemas/*.py"]
+outputs = ["src/clients/python/src/justbe_webview/schemas/*.py"]
 
 ## Debug
 

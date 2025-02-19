@@ -3,13 +3,17 @@ import { join } from "jsr:@std/path";
 import { parseArgs } from "jsr:@std/cli/parse-args";
 import type { JSONSchema } from "../../json-schema.d.ts";
 import { generateTypeScript } from "./gen-typescript.ts";
-import { generatePython } from "./gen-python.ts";
+import {
+  extractExportedNames,
+  generateAll,
+  generatePython,
+} from "./gen-python.ts";
 import { parseSchema } from "./parser.ts";
 
 const schemasDir = new URL("../../schemas", import.meta.url).pathname;
 const tsSchemaDir = new URL("../../src/clients/deno", import.meta.url).pathname;
 const pySchemaDir =
-  new URL("../../src/clients/python/src/webview_python", import.meta.url)
+  new URL("../../src/clients/python/src/justbe_webview", import.meta.url)
     .pathname;
 
 async function ensureDir(dir: string) {
@@ -80,8 +84,18 @@ async function main() {
     const pyContent = schemas.map((doc) =>
       generatePython(doc, doc.title, relativePath)
     ).join("\n\n\n");
+
+    // Extract all exported names and generate __all__
+    const exportedNames = extractExportedNames(pyContent);
+    const allContent = generateAll(exportedNames);
+
+    // Insert __all__ after the header (which is in the first schema's output)
+    const headerEndIndex = pyContent.indexOf("\n\n") + 2;
+    const finalContent = pyContent.slice(0, headerEndIndex) + allContent +
+      pyContent.slice(headerEndIndex);
+
     const pyFilePath = join(pySchemaDir, "schemas.py");
-    await Deno.writeTextFile(pyFilePath, pyContent);
+    await Deno.writeTextFile(pyFilePath, finalContent);
     console.log(`Generated Python schemas: ${pyFilePath}`);
   }
 
