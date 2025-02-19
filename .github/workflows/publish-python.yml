@@ -1,0 +1,82 @@
+name: Publish Python Client
+on:
+  workflow_run:
+    workflows: ["Verify", "Release Rust Binary"]
+    types:
+      - completed
+    branches: [main]
+  pull_request:
+    paths:
+      - 'src/clients/python/**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Only run if the workflow_run was successful (for the main branch case)
+    if: github.event_name == 'pull_request' || github.event.workflow_run.conclusion == 'success'
+    
+    defaults:
+      run:
+        working-directory: src/clients/python
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mise
+        uses: jdx/mise-action@v2
+
+      - name: Install tools
+        run: mise install
+
+      - name: Get current version
+        id: current_version
+        run: echo "version=$(grep '^version = ' pyproject.toml | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Get published version
+        id: published_version
+        run: |
+          if ! version=$(curl -sf https://pypi.org/pypi/justbe-webview/json | jq -r '.info.version // "0.0.0"'); then
+            echo "Failed to fetch version from PyPI, using 0.0.0"
+            version="0.0.0"
+          fi
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Build package
+        if: ${{ steps.current_version.outputs.version != steps.published_version.outputs.version || github.event_name == 'pull_request' }}
+        run: uv build
+
+      - name: Dry run publish to PyPI
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "Would publish version ${{ steps.current_version.outputs.version }} to PyPI"
+          echo "Current published version: ${{ steps.published_version.outputs.version }}"
+          echo "Package contents:"
+          ls -l dist/
+          echo "Archive contents:"
+          tar tzf dist/*.tar.gz | sort
+
+      - name: Publish to PyPI
+        if: ${{ steps.current_version.outputs.version != steps.published_version.outputs.version && github.event_name == 'workflow_run' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: src/clients/python/dist/
+          verbose: true
+
+      - name: Tag and push if versions differ
+        if: ${{ steps.current_version.outputs.version != steps.published_version.outputs.version && github.event_name == 'workflow_run' }}
+        run: |
+          # Ensure the tag doesn't already exist
+          if ! git rev-parse "python-v${{ steps.current_version.outputs.version }}" >/dev/null 2>&1; then
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git tag -a python-v${{ steps.current_version.outputs.version }} -m "Release ${{ steps.current_version.outputs.version }}"
+            git push origin python-v${{ steps.current_version.outputs.version }}
+          else
+            echo "Tag python-v${{ steps.current_version.outputs.version }} already exists, skipping tag creation"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
