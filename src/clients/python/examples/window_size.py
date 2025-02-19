@@ -1,22 +1,22 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "webview-python",
+#     "justbe-webview",
 # ]
 #
 # [tool.uv.sources]
-# webview-python = { path = "../" }
+# justbe-webview = { path = "../" }
 # ///
 import asyncio
 
-from webview_python import WebView, WebViewOptions, WebViewContentHtml, IpcNotification
+from justbe_webview import WebView, Options, ContentHtml, IpcNotification, Size
 
 
 async def main():
     print("Creating webview")
-    config = WebViewOptions(
+    config = Options(
         title="Window Size",
-        load=WebViewContentHtml(
+        load=ContentHtml(
             html="""
             <h1>Window Sizes</h1>
             <div style="display: flex; gap: 10px;">
@@ -26,7 +26,7 @@ async def main():
             </div>
             """
         ),
-        size={"width": 800, "height": 200},
+        size=Size(width=800, height=200),
         ipc=True,
     )
 
@@ -50,4 +50,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

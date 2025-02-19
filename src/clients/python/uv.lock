@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.12"
 
 [[package]]
@@ -78,6 +79,37 @@ sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442 },
 ]
+
+[[package]]
+name = "justbe-webview"
+version = "0.0.1"
+source = { editable = "." }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "httpx" },
+    { name = "msgspec" },
+    { name = "pyee" },
+    { name = "python-ulid" },
+    { name = "types-aiofiles" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiofiles", specifier = ">=24.1.0" },
+    { name = "httpx", specifier = ">=0.27.2" },
+    { name = "msgspec", specifier = ">=0.19.0" },
+    { name = "pyee", specifier = ">=12.0.0" },
+    { name = "python-ulid", specifier = ">=3.0.0" },
+    { name = "types-aiofiles", specifier = ">=24.1.0.20240626" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = ">=0.6.9" }]
 
 [[package]]
 name = "msgspec"
@@ -173,34 +205,3 @@ sdist = { url = "https://files.pythonhosted.org/packages/df/db/f35a00659bc03fec3
 wheels = [
     { url = "https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d", size = 37438 },
 ]
-
-[[package]]
-name = "webview-python"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiofiles" },
-    { name = "httpx" },
-    { name = "msgspec" },
-    { name = "pyee" },
-    { name = "python-ulid" },
-    { name = "types-aiofiles" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiofiles", specifier = ">=24.1.0" },
-    { name = "httpx", specifier = ">=0.27.2" },
-    { name = "msgspec", specifier = ">=0.19.0" },
-    { name = "pyee", specifier = ">=12.0.0" },
-    { name = "python-ulid", specifier = ">=3.0.0" },
-    { name = "types-aiofiles", specifier = ">=24.1.0.20240626" },
-]
-
-[package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.6.9" }]

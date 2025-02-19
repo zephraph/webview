@@ -1,34 +1,34 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "webview-python",
+#     "justbe-webview",
 # ]
 #
 # [tool.uv.sources]
-# webview-python = { path = "../" }
+# justbe-webview = { path = "../" }
 # ///
 import asyncio
 
-from webview_python import (
+from justbe_webview import (
     WebView,
-    WebViewOptions,
-    WebViewContentHtml,
-    WebViewNotification,
+    Options,
+    ContentHtml,
+    Notification,
 )
 
 
 async def main():
     print("Creating webview")
-    config = WebViewOptions(
+    config = Options(
         title="Simple",
-        load=WebViewContentHtml(html="<h1>Hello, World!</h1>"),
+        load=ContentHtml(html="<h1>Hello, World!</h1>"),
         devtools=True,
         initializationScript="console.log('This is printed from initializationScript!')",
     )
 
     async with WebView(config) as webview:
 
-        async def handle_start(event: WebViewNotification):
+        async def handle_start(event: Notification):
             print("handle_start called")
             await webview.set_title("Title set from Python")
             current_title = await webview.get_title()
