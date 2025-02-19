@@ -43,6 +43,17 @@ jobs:
           cache_key_prefix: mise-${{ hashFiles('mise.toml') }}-${{ matrix.target }}
           experimental: true
 
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: "binary-${{ matrix.target }}"
+          workspaces: "."
+          cache-directories: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+
       - run: mise x -- rustup target add ${{ matrix.target }}
       - run: mise run ci:install-deps
 
