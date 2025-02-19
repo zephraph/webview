@@ -3,6 +3,48 @@ from enum import Enum
 from typing import Union
 import msgspec
 
+__all__ = [
+    "AckResponse",
+    "BooleanResultType",
+    "ClosedNotification",
+    "Content",
+    "ContentHtml",
+    "ContentUrl",
+    "ErrResponse",
+    "EvalRequest",
+    "FloatResultType",
+    "FullscreenRequest",
+    "GetSizeRequest",
+    "GetTitleRequest",
+    "GetVersionRequest",
+    "IpcNotification",
+    "IsVisibleRequest",
+    "LoadHtmlRequest",
+    "LoadUrlRequest",
+    "MaximizeRequest",
+    "Message",
+    "MinimizeRequest",
+    "Notification",
+    "NotificationMessage",
+    "OpenDevToolsRequest",
+    "Options",
+    "Request",
+    "Response",
+    "ResponseMessage",
+    "ResultResponse",
+    "ResultType",
+    "SetSizeRequest",
+    "SetTitleRequest",
+    "SetVisibilityRequest",
+    "Size",
+    "SizeResultType",
+    "SizeWithScale",
+    "StartedNotification",
+    "StringResultType",
+    "WindowSize",
+    "WindowSizeStates"
+]
+
 class StartedNotification(msgspec.Struct, tag_field="$type", tag="started"): 
     version: str
     """The version of the webview binary""" 

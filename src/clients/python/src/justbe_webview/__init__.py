@@ -10,6 +10,8 @@ from pyee.asyncio import AsyncIOEventEmitter
 import msgspec
 import sys
 
+from .schemas import *
+
 # Import schemas
 from .schemas import (
     NotificationMessage,
@@ -43,7 +45,6 @@ from .schemas import (
     LoadHtmlRequest,
     LoadUrlRequest,
     Size,
-    ContentHtml as WebViewContentHtml,
 )
 
 # Constants
