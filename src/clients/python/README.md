@@ -20,19 +20,19 @@ pip install justbe-webview
 import asyncio
 from justbe_webview import (
     WebView,
-    WebViewOptions,
-    WebViewContentHtml,
-    WebViewNotification,
+    Options,
+    ContentHtml,
+    Notification,
 )
 
 async def main():
-    config = WebViewOptions(
+    config = Options(
         title="Simple",
-        load=WebViewContentHtml(html="<h1>Hello, World!</h1>"),
+        load=ContentHtml(html="<h1>Hello, World!</h1>"),
     )
 
     async with WebView(config) as webview:
-        async def handle_start(event: WebViewNotification):
+        async def handle_start(event: Notification):
             await webview.eval("console.log('This is printed from eval!')")
 
         webview.on("started", handle_start)
