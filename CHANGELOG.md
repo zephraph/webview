@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.0.2 Python Client; 1.0.1-rc.1 Deno Client; 0.3.0 binary -- 2025-02-23
+
+Binary
+
+- Updated wry to 0.49.0
+- Updated tao to 0.32.0
+
+Python Client
+
+- Updated webview binary to 0.3.0
+- Fixed readme
+- Fixed binary path being wrong
+- Fixed windows binary name being incorrectly constructed
+- Fixed an issue where events weren't being acknowledged
+
+Deno Client
+
+- Updated webview to 0.3.0
+
+## 0.0.1 Python Client; 0.2.0 binary -- 2025-02-18
+
+- Initial release of the python client
+
 ## 1.0.0-rc.1 Deno Client; 0.2.0 binary -- 2025-02-17
 
 - Added new logging that can be triggered with the `LOG_LEVEL` environment variable

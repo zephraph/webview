@@ -129,7 +129,7 @@ depends = ["lint:*"]
 description = "Run a python example"
 depends = ["build:python"]
 dir = "src/clients/python"
-run = "uv run examples/{{arg(name=\"example\")}}.py"
+run = "uv run -n examples/{{arg(name=\"example\")}}.py"
 env = { LOG_LEVEL = "debug", WEBVIEW_BIN = "../../../target/debug/webview" }
 
 [tasks."example:deno"]
