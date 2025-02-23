@@ -219,7 +219,7 @@ class WebView:
         def set_result(event: Union[AckResponse, ResultResponse, ErrResponse]) -> None:
             future.set_result(event)
 
-        self.internal_event.once(request.id, set_result)  # type: ignore
+        self.internal_event.once(str(request.id), set_result)  # type: ignore
 
         assert self.process.stdin is not None
         encoded = msgspec.json.encode(request)

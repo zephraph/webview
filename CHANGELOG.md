@@ -13,6 +13,7 @@ Python Client
 - Fixed readme
 - Fixed binary path being wrong
 - Fixed windows binary name being incorrectly constructed
+- Fixed an issue where events weren't being acknowledged
 
 Deno Client
 
