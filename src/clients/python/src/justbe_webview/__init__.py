@@ -48,7 +48,7 @@ from .schemas import (
 )
 
 # Constants
-BIN_VERSION = "0.2.0"
+BIN_VERSION = "0.3.0"
 
 T = TypeVar("T", bound=WebViewNotification)
 
