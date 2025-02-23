@@ -85,7 +85,7 @@ async def get_webview_bin(options: WebViewOptions) -> str:
         flags = "-transparent"
 
     cache_dir = get_cache_dir()
-    file_name = f"deno-webview-{BIN_VERSION}{flags}"
+    file_name = f"webview-{BIN_VERSION}{flags}"
     if platform.system() == "Windows":
         file_name += ".exe"
     file_path = cache_dir / file_name
@@ -93,7 +93,7 @@ async def get_webview_bin(options: WebViewOptions) -> str:
     if file_path.exists():
         return str(file_path)
 
-    url = f"https://github.com/zephraph/webview/releases/download/webview-v{BIN_VERSION}/deno-webview"
+    url = f"https://github.com/zephraph/webview/releases/download/webview-v{BIN_VERSION}/webview"
     if platform.system() == "Darwin":
         url += "-mac"
         if platform.machine() == "arm64":
