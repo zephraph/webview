@@ -101,9 +101,12 @@ async def get_webview_bin(options: WebViewOptions) -> str:
     elif platform.system() == "Linux":
         url += "-linux"
     elif platform.system() == "Windows":
-        url += "-windows.exe"
+        url += "-windows"
     else:
         raise ValueError("Unsupported OS")
+
+    if platform.system() == "Windows":
+        url += ".exe"
 
     url += flags
 
