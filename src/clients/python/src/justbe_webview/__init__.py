@@ -105,10 +105,10 @@ async def get_webview_bin(options: WebViewOptions) -> str:
     else:
         raise ValueError("Unsupported OS")
 
+    url += flags
+
     if platform.system() == "Windows":
         url += ".exe"
-
-    url += flags
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url, follow_redirects=True)
