@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.3 Python Client -- 2025-03-01
+
+- Fixed a bug where the windows binary path was still incorrect (thanks @daidalvi)
+
 ## 0.0.2 Python Client; 1.0.1-rc.1 Deno Client; 0.3.0 binary -- 2025-02-23
 
 Binary
@@ -27,8 +31,8 @@ Deno Client
 
 - Added new logging that can be triggered with the `LOG_LEVEL` environment variable
 
-- [BREAKING] Changed some typenames/zod schemas not to include `Webview` in the name. 
-- [BREAKING] Updated code generation to support multiple clients which necessitated a breaking change for the Deno client. 
+- [BREAKING] Changed some typenames/zod schemas not to include `Webview` in the name.
+- [BREAKING] Updated code generation to support multiple clients which necessitated a breaking change for the Deno client.
 
   ```diff
   using webview = await createWebView({
@@ -41,7 +45,7 @@ Deno Client
       "console.log('This is printed from initializationScript!')",
   });
   ```
-  `html` or `url` must be wrapped in an object and passed to `load`. 
+  `html` or `url` must be wrapped in an object and passed to `load`.
 
 ## 0.0.17 (binary 0.1.14) -- 2024-10-02
 
