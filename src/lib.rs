@@ -21,7 +21,7 @@ use tao::{
 };
 use wry::http::header::{HeaderName, HeaderValue};
 use wry::http::Response as HttpResponse;
-use wry::WebViewBuilder;
+use wry::{WebViewBuilder, WebViewBuilderExtUnix};
 
 use actson::feeder::BufReaderJsonFeeder;
 use actson::{JsonEvent, JsonParser};
@@ -496,7 +496,15 @@ pub fn run(webview_options: Options) -> wry::Result<()> {
     if let Some(user_agent) = webview_options.user_agent {
         webview_builder = webview_builder.with_user_agent(user_agent.as_str());
     }
+    #[cfg(not(target_os = "linux"))]
     let webview = webview_builder.build(&window)?;
+
+    #[cfg(target_os = "linux")]
+    let webview = {
+        use tao::platform::unix::WindowExtUnix;
+        let vbox = window.default_vbox().unwrap();
+        webview_builder.build_gtk(vbox)?
+    };
 
     let notify_tx = tx.clone();
     let notify = move |notification: Notification| {
