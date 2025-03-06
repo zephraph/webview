@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.4 Python Client; 1.0.1-rc.2 Deno Client; 0.3.1 binary -- 2025-03-05
+
+- Fixed a bug that caused webview to fail to open on linux
+- Upgraded various native dependencies
+
 ## 0.0.3 Python Client -- 2025-03-01
 
 - Fixed a bug where the windows binary path was still incorrect (thanks @daidalvi)

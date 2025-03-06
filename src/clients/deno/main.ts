@@ -55,7 +55,7 @@ if (
 
 // Should match the cargo package version
 /** The version of the webview binary that's expected */
-export const BIN_VERSION = "0.3.0";
+export const BIN_VERSION = "0.3.1";
 
 type WebViewNotification = Extract<
   Message,
