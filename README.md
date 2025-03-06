@@ -80,3 +80,10 @@ if __name__ == "__main__":
 This project uses [mise](https://mise.jdx.dev/) to manage runtimes (like deno, python, rust) and run scripts. If you'd like to contribute, you'll need to install it. 
 
 Use the `mise tasks` command to see what you can do. 
+
+### Linux Build Instructions
+
+Make sure you have the following installed:
+
+- `build-essential`
+- `webkit2gtk-4.1` (see [install instructions](https://crates.io/crates/wry#user-content-linux-dependencies))
