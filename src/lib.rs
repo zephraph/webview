@@ -21,7 +21,7 @@ use tao::{
 };
 use wry::http::header::{HeaderName, HeaderValue};
 use wry::http::Response as HttpResponse;
-use wry::{WebViewBuilder, WebViewBuilderExtUnix};
+use wry::WebViewBuilder;
 
 use actson::feeder::BufReaderJsonFeeder;
 use actson::{JsonEvent, JsonParser};
@@ -502,6 +502,7 @@ pub fn run(webview_options: Options) -> wry::Result<()> {
     #[cfg(target_os = "linux")]
     let webview = {
         use tao::platform::unix::WindowExtUnix;
+        use wry::WebViewBuilderExtUnix;
         let vbox = window.default_vbox().unwrap();
         webview_builder.build_gtk(vbox)?
     };
