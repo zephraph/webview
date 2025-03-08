@@ -2283,7 +2283,7 @@ dependencies = [
 
 [[package]]
 name = "webview"
-version = "0.3.1"
+version = "0.3.0"
 dependencies = [
  "actson",
  "parking_lot",
@@ -2623,9 +2623,9 @@ dependencies = [
 
 [[package]]
 name = "wry"
-version = "0.50.0"
+version = "0.50.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eaa83204cc976ccffdc50559914edb93945f472863916c61de5cc772d452fb4a"
+checksum = "804a7d1613bd699beccaa60f3b3c679acee21cebba1945a693f5eab95c08d1fa"
 dependencies = [
  "base64",
  "block2",
