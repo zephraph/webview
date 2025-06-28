@@ -3,6 +3,10 @@ _test*
 .DS_Store
 __pycache__
 node_modules
+.claude
+
+# Build outputs
+src/clients/go/build/
 
 .vscode/*
 !.vscode/*.shared.json
