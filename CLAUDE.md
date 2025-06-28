@@ -43,6 +43,7 @@ mise lint
 # Specific lints
 mise lint:rust     # cargo fmt --check && cargo clippy
 mise lint:deno     # deno lint && deno check
+mise lint:go       # golangci-lint run
 mise lint:ast-grep # AST-based linting
 ```
 
