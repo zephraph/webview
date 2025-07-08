@@ -8,6 +8,7 @@ import {
   generateAll,
   generatePython,
 } from "./gen-python.ts";
+import { generateGo } from "./gen-go.ts";
 import { parseSchema } from "./parser.ts";
 
 const schemasDir = new URL("../../schemas", import.meta.url).pathname;
@@ -15,6 +16,7 @@ const tsSchemaDir = new URL("../../src/clients/deno", import.meta.url).pathname;
 const pySchemaDir =
   new URL("../../src/clients/python/src/justbe_webview", import.meta.url)
     .pathname;
+const goSchemaDir = new URL("../../src/clients/go/webview", import.meta.url).pathname;
 
 async function ensureDir(dir: string) {
   try {
@@ -33,8 +35,8 @@ async function main() {
   });
 
   const language = flags.language?.toLowerCase();
-  if (language && !["typescript", "python"].includes(language)) {
-    console.error('Language must be either "typescript" or "python"');
+  if (language && !["typescript", "python", "go"].includes(language)) {
+    console.error('Language must be either "typescript", "python", or "go"');
     Deno.exit(1);
   }
 
@@ -47,6 +49,9 @@ async function main() {
   }
   if (!language || language === "python") {
     await ensureDir(pySchemaDir);
+  }
+  if (!language || language === "go") {
+    await ensureDir(goSchemaDir);
   }
 
   const entries = [];
@@ -99,6 +104,16 @@ async function main() {
     console.log(`Generated Python schemas: ${pyFilePath}`);
   }
 
+  if (!language || language === "go") {
+    // Generate single Go file with all schemas
+    const goContent = schemas.map((doc) =>
+      generateGo(doc, doc.title, relativePath)
+    ).join("\n\n");
+    const goFilePath = join(goSchemaDir, "schemas.go");
+    await Deno.writeTextFile(goFilePath, goContent);
+    console.log(`Generated Go schemas: ${goFilePath}`);
+  }
+
   // Run deno fmt on TypeScript files if they were generated
   if (!language || language === "typescript") {
     const command = new Deno.Command("deno", {
@@ -111,6 +126,14 @@ async function main() {
   if (!language || language === "python") {
     const command = new Deno.Command("ruff", {
       args: ["check", "--fix", pySchemaDir],
+    });
+    await command.output();
+  }
+
+  // Run go fmt on Go files if they were generated
+  if (!language || language === "go") {
+    const command = new Deno.Command("go", {
+      args: ["fmt", goSchemaDir],
     });
     await command.output();
   }

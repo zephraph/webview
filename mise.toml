@@ -4,6 +4,8 @@ deno = "2.3.7"
 rust = { version = "1.78.0", postinstall = "rustup component add rustfmt clippy rust-analyzer" }
 ruff = "0.12.0"
 uv = "0.6.2"
+go = "1.23.4"
+golangci-lint = "2.1.6"
 
 [settings]
 experimental = true
@@ -36,15 +38,22 @@ outputs = ["schemas/*.json"]
 description = "Generate the deno client"
 run = "deno run -A scripts/generate-schema/index.ts --language typescript"
 depends = ["gen:rust"]
-sources = ["schemas/*", "scripts/generate-schema.ts"]
+sources = ["schemas/*", "scripts/generate-schema/**/*.ts"]
 outputs = ["src/clients/deno/schemas/*.ts"]
 
 [tasks."gen:python"]
 description = "Generate the python client"
 run = "deno run -A scripts/generate-schema/index.ts --language python"
 depends = ["gen:rust"]
-sources = ["schemas/*", "scripts/generate-schema.ts"]
+sources = ["schemas/*", "scripts/generate-schema/**/*.ts"]
 outputs = ["src/clients/python/src/justbe_webview/schemas/*.py"]
+
+[tasks."gen:go"]
+description = "Generate the go client"
+run = "deno run -A scripts/generate-schema/index.ts --language go"
+depends = ["gen:rust"]
+sources = ["schemas/*", "scripts/generate-schema/**/*.ts"]
+outputs = ["src/clients/go/webview/schemas.go"]
 
 ## Debug
 
@@ -93,6 +102,10 @@ depends = ["gen:deno", "build:rust"]
 description = "Run code gen for python and ensure the binary is built"
 depends = ["gen:python", "build:rust"]
 
+[tasks."build:go"]
+description = "Run code gen for go and ensure the binary is built"
+depends = ["gen:go", "build:rust"]
+
 [tasks.build]
 description = "Build all targets"
 depends = ["build:*"]
@@ -108,6 +121,11 @@ run = ["cargo fmt --check", "cargo clippy"]
 description = "Run deno lint"
 dir = "src/clients/deno"
 run = ["deno lint", "deno check ."]
+
+[tasks."lint:go"]
+description = "Run golangci-lint against go code"
+dir = "src/clients/go"
+run = "golangci-lint run ./webview/..."
 
 [tasks."lint:ast-grep"]
 description = "Run ast-grep lint"
@@ -138,3 +156,10 @@ depends = ["build:deno"]
 env = { LOG_LEVEL = "debug", WEBVIEW_BIN = "../../../target/debug/webview" }
 run = "deno run -E -R -N --allow-run examples/{{arg(name=\"example\")}}.ts"
 dir = "src/clients/deno"
+
+[tasks."example:go"]
+description = "Run a go example"
+depends = ["build:go"]
+dir = "src/clients/go"
+run = "mkdir -p build && go build -o build/{{arg(name=\"example\")}} examples/{{arg(name=\"example\")}}.go && ./build/{{arg(name=\"example\")}}"
+env = { LOG_LEVEL = "debug", WEBVIEW_BIN = "../../../target/debug/webview" }
