@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <div style={{ position: "absolute", inset: 0 }}>
-        <Tldraw persistenceKey="tldraw-example" cameraOptions={{ wheelBehavior: "zoom" }} />
+        <Tldraw persistenceKey="tldraw-example" cameraOptions={{ wheelBehavior: "zoom" }} onMount={(editor) => { editor.updateInstanceState({ isFocusMode: true })}} />
       </div>
     </>
   );
