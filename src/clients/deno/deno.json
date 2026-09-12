@@ -11,7 +11,7 @@
     "tracing": "jsr:@bcheidemann/tracing@^0.9.0",
     "jsr:@std/fs": "jsr:@std/fs@^1.0.3",
     "jsr:@std/path": "jsr:@std/path@^1.0.6",
-    "npm:zod": "npm:zod@^3.23.8",
+    "npm:zod": "npm:zod@^4.0.0",
     "npm:type-fest": "npm:type-fest@^5.0.0"
   }
 }
